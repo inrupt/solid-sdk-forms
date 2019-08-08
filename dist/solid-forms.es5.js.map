@@ -1,1 +1,0 @@
-{"version":3,"file":"solid-forms.es5.js","sources":["../src/classes/form-model.ts"],"sourcesContent":["export class FormModel {\n    get formName() {\n      return 'Form model example';\n    }\n  }\n  "],"names":[],"mappings":";IAAA;KAIG;IAHC,sBAAI,+BAAQ;aAAZ;YACE,OAAO,oBAAoB,CAAC;SAC7B;;;OAAA;IACH,gBAAC;CAAA;;;;"}

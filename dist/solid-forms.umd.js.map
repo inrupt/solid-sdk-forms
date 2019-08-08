@@ -1,1 +1,0 @@
-{"version":3,"file":"solid-forms.umd.js","sources":["../src/classes/form-model.ts"],"sourcesContent":["export class FormModel {\n    get formName() {\n      return 'Form model example';\n    }\n  }\n  "],"names":[],"mappings":";;;;;;;MAAA;OAIG;MAHC,sBAAI,+BAAQ;eAAZ;cACE,OAAO,oBAAoB,CAAC;WAC7B;;;SAAA;MACH,gBAAC;EAAD,CAAC;;;;;;;;;;;;"}
