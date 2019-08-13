@@ -1,6 +1,6 @@
 {
   "name": "solid-forms",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "keywords": [],
   "main": "dist/solid-forms.umd.js",
@@ -100,10 +100,12 @@
     "prompt": "^1.0.0",
     "replace-in-file": "^3.4.2",
     "rimraf": "^2.6.2",
-    "rollup": "^0.67.0",
-    "rollup-plugin-commonjs": "^9.1.8",
+    "rollup": "^1.12.0",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.0.2",
     "rollup-plugin-json": "^3.1.0",
-    "rollup-plugin-node-resolve": "^3.4.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-replace": "^2.2.0",
     "rollup-plugin-sourcemaps": "^0.4.2",
     "rollup-plugin-typescript2": "^0.22.1",
     "semantic-release": "^15.9.16",
@@ -111,13 +113,25 @@
     "travis-deploy-once": "^5.0.9",
     "ts-jest": "^23.10.2",
     "ts-node": "^7.0.1",
+    "tslib": "^1.10.0",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.15.0",
     "tslint-config-standard": "^8.0.1",
     "typedoc": "^0.15.0",
-    "typescript": "^3.0.3"
+    "typescript": "^3.5.3"
   },
   "dependencies": {
-    "@types/mocha": "^5.2.7"
+    "@shexjs/core": "^1.0.0-alpha.4",
+    "@shexjs/parser": "^1.0.0-alpha.4",
+    "@solid/query-ldflex": "^2.5.1",
+    "@types/n3": "^1.1.0",
+    "@types/solid-auth-client": "^2.3.0",
+    "bufferutil": "^4.0.1",
+    "global": "^4.4.0",
+    "jsonld-request": "^0.2.0",
+    "n3": "^1.1.1",
+    "rollup-plugin-inject": "^3.0.1",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "solid-auth-client": "^2.3.0"
   }
 }
