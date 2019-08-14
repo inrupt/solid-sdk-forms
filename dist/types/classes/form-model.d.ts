@@ -4,7 +4,7 @@ export declare class FormModel {
     /**
      * @param {String} url the schema document url
      * @return {String} document extension
-    */
+     */
     schemaType: (url: String) => string;
     /**
      *

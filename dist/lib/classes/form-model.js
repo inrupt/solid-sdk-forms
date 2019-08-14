@@ -47,7 +47,7 @@ var FormModel = /** @class */ (function () {
         /**
          * @param {String} url the schema document url
          * @return {String} document extension
-        */
+         */
         this.schemaType = function (url) {
             var name = url.split('.');
             return name[name.length - 1];
@@ -74,9 +74,7 @@ var FormModel = /** @class */ (function () {
                     baseIRI: url
                 });
                 graph.addQuads(parser.parse(schemaText));
-                var shexRSchemaObj = parser_1.default
-                    .construct(url, null, { index: true })
-                    .parse(schemas_1.ShExRSchema);
+                var shexRSchemaObj = parser_1.default.construct(url, null, { index: true }).parse(schemas_1.ShExRSchema);
                 var graphParser = core_1.default.Validator.construct(shexRSchemaObj, {});
                 var schemaRoot = graph.getQuads(null, core_1.default.Util.RDF.type, 'http://www.w3.org/ns/shex#Schema', '')[0].subject; // !!check
                 var val = graphParser.validate(core_1.default.Util.makeN3DB(graph), schemaRoot, core_1.default.Validator.start); // start shape
@@ -148,8 +146,7 @@ var FormModel = /** @class */ (function () {
         this.relativeize = function (object, base) {
             for (var key in object) {
                 var item = object[key];
-                if (key === 'id' ||
-                    (key === 'valueExpr' && typeof object[key] === 'string')) {
+                if (key === 'id' || (key === 'valueExpr' && typeof object[key] === 'string')) {
                     object[key] = new URL(object[key], base).href;
                 }
                 else if (typeof item === 'object') {

@@ -32,11 +32,11 @@ export class ShexToUiForm {
   convert() {
     const {
       schema,
-      termFactory: { namedNode, blankNode, literal, graph }
+      graph,
+      termFactory: { namedNode, blankNode, literal }
     } = this
     const IRI_this = '#'
     const rootFormTerm = namedNode(`${IRI_this}formRoot`)
-
     const start =
       'start' in this.schema ? this.derefShapeExpression(schema.start) : schema.shapes[0]
 
@@ -94,9 +94,13 @@ export class ShexToUiForm {
     try {
       const { graph } = this
       const sanitizedPath = path.replace(/[^A-Za-z_-]/g, '_')
+      const label = this.findTitle(shape)
+
       graph.addQuad(formTerm, namedNode(`${NS_RDF}type`), namedNode(`${NS_UI}Form`))
-      let label = this.findTitle(shape)
-      if (label) graph.addQuad(formTerm, namedNode(this.iriDctitle), literal(label.object.value))
+
+      if (label) {
+        graph.addQuad(formTerm, namedNode(this.iriDctitle), literal(label.object.value))
+      }
 
       let currentShape = shape
 

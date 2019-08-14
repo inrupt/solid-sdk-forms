@@ -8,7 +8,8 @@ var constants_1 = require("../constants");
 function jsonLdtoRdf(ld, namedNode, literal, blankNode) {
     if (typeof ld === 'object' && 'value' in ld) {
         var dtOrLang = ld.language || (ld.datatype && ld.datatype !== constants_1.IRI_XsdString)
-            ? ld.language : namedNode(ld.datatype);
+            ? ld.language
+            : namedNode(ld.datatype);
         return literal(ld.value, dtOrLang);
     }
     else if (ld.startsWith('_:')) {

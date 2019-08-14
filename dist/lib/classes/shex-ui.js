@@ -39,7 +39,7 @@ var ShexToUiForm = /** @class */ (function () {
         });
         writer.addQuads(graph.getQuads());
         var formModel;
-        writer.end(function (error, result) { return formModel = result; });
+        writer.end(function (error, result) { return (formModel = result); });
         return formModel;
     };
     ShexToUiForm.prototype.findTitle = function (shexpr) {
@@ -84,7 +84,7 @@ var ShexToUiForm = /** @class */ (function () {
             if (label)
                 graph_1.addQuad(formTerm, namedNode(this.iriDctitle), literal(label.object.value));
             var currentShape = shape;
-            if (!("expression" in shape) || shape.expression.type !== "EachOf") {
+            if (!('expression' in shape) || shape.expression.type !== 'EachOf') {
                 currentShape = __assign({}, currentShape, { expression: { expressions: [currentShape.expression] } });
             }
             // The UI vocabulary accepts only lists of atoms.
@@ -99,7 +99,7 @@ var ShexToUiForm = /** @class */ (function () {
                     var fieldType = te.valueExpr && te.valueExpr.values ? 'Classifier' : 'SingleLineTextField';
                     var needFieldType = namedNode(constants_1.NS_UI + fieldType);
                     // copy annotations
-                    if ("annotations" in te)
+                    if ('annotations' in te)
                         te.annotations.forEach(function (a) {
                             if (a.predicate === constants_1.NS_LAYOUT + "ref") {
                                 return;
@@ -109,7 +109,7 @@ var ShexToUiForm = /** @class */ (function () {
                             }
                             if (a.predicate === constants_1.NS_UI + "contents") {
                                 // ui:contents get their own item in the list
-                                var commentTerm = "id" in te
+                                var commentTerm = 'id' in te
                                     ? _this.jsonLdtoRdf(te.id + "Comment") // !! could collide, but easy to debug
                                     : blankNode(sanitizedPath_1 + "_parts_" + i + "_comment");
                                 graph_1.addQuad(commentTerm, namedNode(_this.iriUitype), namedNode(constants_1.NS_UI + "Comment"));
@@ -167,7 +167,8 @@ var ShexToUiForm = /** @class */ (function () {
         var _a = this.termFactory, namedNode = _a.namedNode, literal = _a.literal, blankNode = _a.blankNode;
         if (typeof ld === 'object' && 'value' in ld) {
             var dtOrLang = ld.language || (ld.datatype && ld.datatype !== constants_1.IRI_XsdString)
-                ? ld.language : namedNode(ld.datatype);
+                ? ld.language
+                : namedNode(ld.datatype);
             return literal(ld.value, dtOrLang);
         }
         else if (ld.startsWith('_:')) {
