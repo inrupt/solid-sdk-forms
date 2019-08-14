@@ -4,3 +4,4 @@ export const NS_UI = 'http://www.w3.org/ns/ui#'
 export const NS_LAYOUT = 'http://janeirodigital.com/layout#'
 export const IRI_Xsd = 'http://www.w3.org/2001/XMLSchema#'
 export const IRI_XsdString = `${IRI_Xsd}string`
+export const SHEX_SCHEMA = 'http://www.w3.org/ns/shex#Schema'

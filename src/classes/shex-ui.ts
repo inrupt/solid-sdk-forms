@@ -1,14 +1,9 @@
 import N3 from 'n3'
 import { NS_RDF, NS_DC, NS_UI, NS_LAYOUT, IRI_XsdString } from '../constants'
 import { ListObject } from './list-object'
+import { Meta } from '../interfaces'
 
-interface Meta {
-  [key: string]: any
-  prefixes: any
-  base: string
-}
-
-export class ShexToUiForm {
+export class ShexFormModel {
   termFactory: any
   meta: Meta
   schema: any
@@ -52,11 +47,18 @@ export class ShexToUiForm {
 
     return formModel
   }
-
+  /**
+   *
+   * @param shexpr
+   */
   findTitle(shexpr: any) {
     return (shexpr.annotations || []).find((a: any) => a.predicate === this.iriDctitle)
   }
 
+  /**
+   *
+   * @param iri
+   */
   localName(iri: string) {
     const { meta } = this
     if (iri.startsWith('_:')) {
@@ -69,7 +71,10 @@ export class ShexToUiForm {
     }
     return `<${iri.startsWith(meta.base) ? iri.substr(meta.base.length) : iri}>`
   }
-
+  /**
+   *
+   * @param shapeExpr
+   */
   derefShapeExpression(shapeExpr: any) {
     if (typeof shapeExpr !== 'string') {
       return shapeExpr
@@ -89,7 +94,15 @@ export class ShexToUiForm {
   findShapeExpression(goal: string) {
     return this.schema.shapes.find((se: any) => se.id === goal)
   }
-
+  /**
+   * Run hover shape and create the object with turtle format
+   * @param shape
+   * @param formTerm
+   * @param path
+   * @param namedNode
+   * @param literal
+   * @param blankNode
+   */
   walkShape(shape: any, formTerm: any, path: string, namedNode: any, literal: any, blankNode: any) {
     try {
       const { graph } = this
@@ -216,7 +229,10 @@ export class ShexToUiForm {
       throw Error(error)
     }
   }
-
+  /**
+   * Convert jsonLd object to RDF object
+   * @param ld
+   */
   jsonLdtoRdf(ld: any) {
     const {
       termFactory: { namedNode, literal, blankNode }

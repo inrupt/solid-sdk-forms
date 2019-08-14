@@ -3,7 +3,8 @@ import shexCore from '@shexjs/core'
 import N3 from 'n3'
 import { ShExRSchema } from '../schemas'
 import { solidFetch } from '../utils'
-import { ShexToUiForm } from '../classes/shex-ui'
+import { ShexFormModel } from '../classes/shex-ui'
+import { SHEX_SCHEMA } from '../constants'
 
 export class FormModel {
   url: string
@@ -45,12 +46,7 @@ export class FormModel {
 
       const shexRSchemaObj = shexParser.construct(url, null, { index: true }).parse(ShExRSchema)
       const graphParser = shexCore.Validator.construct(shexRSchemaObj, {})
-      const schemaRoot = graph.getQuads(
-        null,
-        shexCore.Util.RDF.type,
-        'http://www.w3.org/ns/shex#Schema',
-        ''
-      )[0].subject // !!check
+      const schemaRoot = graph.getQuads(null, shexCore.Util.RDF.type, SHEX_SCHEMA, '')[0].subject // !!check
       const val = graphParser.validate(
         shexCore.Util.makeN3DB(graph),
         schemaRoot,
@@ -104,8 +100,8 @@ export class FormModel {
   parseSchemaToUi = async (): Promise<any> => {
     try {
       const schema = await this.parseSchema(this.url)
-      const formModel = new ShexToUiForm(schema)
-      console.log(formModel)
+      const formModel = new ShexFormModel(schema)
+
       return formModel.convert()
     } catch (error) {
       throw Error(error)

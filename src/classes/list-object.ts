@@ -14,7 +14,11 @@ export class ListObject {
     this.termFactory = termFactory
     this.NS_Rdf = NS_RDF
   }
-
+  /**
+   *
+   * @param elt
+   * @param label
+   */
   add(elt: any, label: string | undefined = undefined) {
     let partLi = this.termFactory.blankNode(label)
     this.graph.addQuad(this.s, this.p, partLi)
