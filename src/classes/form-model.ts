@@ -35,6 +35,9 @@ export class FormModel {
     }
   }
 
+  /**
+   * Convert ShEx to Turtle object
+   */
   parseTurtle = (schemaText: string, url: string) => {
     try {
       const graph = new N3.Store()
@@ -60,6 +63,9 @@ export class FormModel {
     }
   }
 
+  /**
+   * Parse schema from shEx, turtle or json files
+   */
   parseSchema = async (url: string) => {
     try {
       const schemaText = await solidFetch.fetchSchema(url)
@@ -97,17 +103,6 @@ export class FormModel {
     }
   }
 
-  parseSchemaToUi = async (): Promise<any> => {
-    try {
-      const schema = await this.parseSchema(this.url)
-      const formModel = new ShexFormModel(schema)
-
-      return formModel.convert()
-    } catch (error) {
-      throw Error(error)
-    }
-  }
-
   relativeize = (object: any, base: any) => {
     for (let key in object) {
       let item = object[key]
@@ -118,5 +113,18 @@ export class FormModel {
       }
     }
     return object
+  }
+  /**
+   * Parse schema to Tim Form Model
+   */
+  parseShEx = async (): Promise<any> => {
+    try {
+      const schema = await this.parseSchema(this.url)
+      const formModel = new ShexFormModel(schema)
+
+      return formModel.convert()
+    } catch (error) {
+      throw Error(error)
+    }
   }
 }

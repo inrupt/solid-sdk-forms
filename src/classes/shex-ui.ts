@@ -2,7 +2,9 @@ import N3 from 'n3'
 import { NS_RDF, NS_DC, NS_UI, NS_LAYOUT, IRI_XsdString } from '../constants'
 import { ListObject } from './list-object'
 import { Meta } from '../interfaces'
-
+/**
+ * Convert ShEx to Tim Form Model
+ */
 export class ShexFormModel {
   termFactory: any
   meta: Meta
@@ -31,10 +33,19 @@ export class ShexFormModel {
       termFactory: { namedNode, blankNode, literal }
     } = this
     const IRI_this = '#'
+    /**
+     * Get root for term into ShexEx
+     */
     const rootFormTerm = namedNode(`${IRI_this}formRoot`)
+    /**
+     * Find ShEx expression
+     */
     const start =
       'start' in this.schema ? this.derefShapeExpression(schema.start) : schema.shapes[0]
 
+    /**
+     * Run into shape to create turtle object
+     */
     this.walkShape(start, rootFormTerm, this.localName(start.id), namedNode, literal, blankNode)
 
     const writer = new N3.Writer({
@@ -48,7 +59,7 @@ export class ShexFormModel {
     return formModel
   }
   /**
-   *
+   * Find label expression into ShEx
    * @param shexpr
    */
   findTitle(shexpr: any) {
@@ -56,7 +67,7 @@ export class ShexFormModel {
   }
 
   /**
-   *
+   * Define shape type into formModel
    * @param iri
    */
   localName(iri: string) {
@@ -90,6 +101,7 @@ export class ShexFormModel {
   /**
    * Find shape expression with given name in schema.
    * returns: corresponding shape expression or undefined
+   * @param {string} goal expression to find
    */
   findShapeExpression(goal: string) {
     return this.schema.shapes.find((se: any) => se.id === goal)
