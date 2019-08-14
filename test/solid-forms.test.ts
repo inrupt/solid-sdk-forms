@@ -1,14 +1,14 @@
-import SolidForms from "../src/solid-forms";
+import { FormModel } from '../src/classes/form-model'
 
 /**
  * Dummy test
  */
-describe("Dummy test", () => {
-  it("works if true is truthy", () => {
+describe('Dummy test', () => {
+  it('works if true is truthy', () => {
     expect(true).toBeTruthy()
   })
 
-  it("DummyClass is instantiable", () => {
-    expect(new SolidForms()).toBeInstanceOf(SolidForms)
+  it('DummyClass is instantiable', () => {
+    expect(new FormModel('url path')).toBeInstanceOf(FormModel)
   })
 })
