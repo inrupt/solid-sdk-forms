@@ -11,19 +11,7 @@ const schema = {
 const shapeId = 'https://example.org/example.shex#ExampleShape'
 const iri = 'https://shexshapes.inrupt.net/public/userprofile.shex#UserProfile'
 
-beforeEach(() => {
-  // Clear all instances and calls to constructor and all methods:
-  // (ShexFormModel as jest.Mock<ShexFormModel>).mockClear();
-})
-
 describe('ShexFormModel', () => {
-  /* it("should call convert function", () => {
-    const instance = new ShexFormModel(schema)
-    instance.convert()
-
-    expect(instance.convert).toHaveBeenCalled();
-  }); */
-
   it('should return node name', () => {
     const instance = new ShexFormModel(schema)
 

@@ -9,11 +9,4 @@ describe('FormModel', () => {
 
     expect(fileExt).toEqual('shex')
   })
-
-  /* it('should return file ext from url path', () => {
-        const instance = new FormModel(url)
-        const fileExt = instance.parseShexC(url)
-    
-        expect(fileExt).toEqual('shex');
-      }); */
 })

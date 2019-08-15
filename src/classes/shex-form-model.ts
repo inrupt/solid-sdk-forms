@@ -195,7 +195,7 @@ export class ShexFormModel {
             typeof te.valueExpr === 'string'
               ? this.derefShapeExpression(te.valueExpr)
               : te.valueExpr
-          console.log(te.valueExpr, 'expression')
+
           // add what we can guess from the value expression
           if (valueExpr.type === 'Shape') {
             needFieldType = null
