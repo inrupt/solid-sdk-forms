@@ -3,7 +3,7 @@ import shexCore from '@shexjs/core'
 import N3 from 'n3'
 import { ShExRSchema } from '../schemas'
 import { solidFetch } from '../utils'
-import { ShexFormModel } from '../classes/shex-ui'
+import { ShexFormModel } from './shex-form-model'
 import { SHEX_SCHEMA } from '../constants'
 
 export class FormModel {

@@ -46,6 +46,13 @@
     }
   },
   "jest": {
+    "globals": {
+      "window": {
+        "location": {
+          "href": "path-example"
+        }
+      }
+    },
     "transform": {
       ".(ts|tsx)": "ts-jest"
     },
