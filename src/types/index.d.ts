@@ -12,3 +12,8 @@ declare module '@shexjs/core' {
   const data: any
   export default data
 }
+
+declare module 'ldflex' {
+  const data: any
+  export default data
+}

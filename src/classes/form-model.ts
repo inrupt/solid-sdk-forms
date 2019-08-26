@@ -1,6 +1,6 @@
 import shexParser from '@shexjs/parser'
 import shexCore from '@shexjs/core'
-import N3 from 'n3'
+import * as N3 from 'n3'
 import { ShExRSchema } from '../schemas'
 import { solidFetch } from '../utils'
 import { ShexFormModel } from './shex-form-model'

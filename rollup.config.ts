@@ -38,7 +38,7 @@ export default {
     commonjs({
       exclude: './node_modules/**', 
       namedExports: {
-      'node_modules/@solid/query-ldflex/lib/index.js': [ 'data' ],
+      'node_modules/@solid/query-ldflex/dist/solid-query-ldflex.bundle.js': [ 'data' ],
       'node_modules/@shexjs/parser/shex-parser.js': ['shexParser'],
       'node_modules/@shexjs/core/shex-core.js': ['shexCore']
       }

@@ -134,12 +134,13 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "@solid/query-ldflex": "^2.5.1",
+    "@solid/query-ldflex": "^2.6.0",
     "@types/n3": "^1.1.0",
     "@types/solid-auth-client": "^2.3.0",
     "bufferutil": "^4.0.1",
     "global": "^4.4.0",
     "jsonld-request": "^0.2.0",
+    "ldflex": "^2.5.1",
     "n3": "^1.1.1",
     "rollup-plugin-inject": "^3.0.1",
     "solid-auth-client": "^2.3.0"
