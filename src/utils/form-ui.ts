@@ -103,13 +103,16 @@ function subjectPrefix(document: any) {
   return `${document}#`
 }
 
-export async function convertFormModel(document: any, partsPath: any, documentUrl: string) {
-  const model = await turtleToFormUi(document, partsPath)
+export async function convertFormModel(
+  documentUri: any,
+  partsPath: any = 'http://www.w3.org/ns/ui#parts'
+) {
+  const model = await turtleToFormUi(data[documentUri], partsPath)
 
   return {
     '@context': {
       ...CONTEXT['@context'],
-      subject: subjectPrefix(documentUrl)
+      subject: subjectPrefix(documentUri)
     },
     'ui:parts': { ...model }
   }
