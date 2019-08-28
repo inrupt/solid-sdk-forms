@@ -1,6 +1,10 @@
 import data from '@solid/query-ldflex'
 import { CONTEXT } from '../constants'
 
+/**
+ * Find prefix context to add into object property
+ * @param node
+ */
 function findContext(node: string) {
   const contexts = Object.keys(CONTEXT['@context'])
   let prefix = ''
@@ -15,12 +19,20 @@ function findContext(node: string) {
   return prefix
 }
 
+/**
+ * Capitalize words into string
+ * @param word
+ */
 function capitalize(word: string) {
   return word.replace(/(?:^|\s)\S/g, letter => {
     return letter.toUpperCase()
   })
 }
 
+/**
+ * Get Label from property string
+ * @param property
+ */
 function findLabel(property: string) {
   if (property.includes('#')) {
     const label = property.split('#')[1]
@@ -30,6 +42,10 @@ function findLabel(property: string) {
   return 'noLabel'
 }
 
+/**
+ * Get Predicate name from string
+ * @param predicate
+ */
 function getPredicateName(predicate: string): any {
   const prefix = findContext(predicate)
   if (predicate.includes('title')) {
@@ -47,6 +63,11 @@ function getPredicateName(predicate: string): any {
   return null
 }
 
+/**
+ * Convert turtle to Json-ld object
+ * @param document
+ * @param partsPath
+ */
 async function turtleToFormUi(document: any, partsPath: any) {
   let fields: any = {}
   const doc = await document
@@ -96,6 +117,10 @@ async function turtleToFormUi(document: any, partsPath: any) {
   return fields
 }
 
+/**
+ * Get the subject prefix
+ * @param document
+ */
 function subjectPrefix(document: any) {
   if (document.includes('#')) {
     return `${document.split('#')[0]}#`
@@ -103,6 +128,11 @@ function subjectPrefix(document: any) {
   return `${document}#`
 }
 
+/**
+ * Convert turtle to formModel(JSON-LD)
+ * @param documentUri
+ * @param partsPath
+ */
 export async function convertFormModel(
   documentUri: any,
   partsPath: any = 'http://www.w3.org/ns/ui#parts'
@@ -118,6 +148,10 @@ export async function convertFormModel(
   }
 }
 
+/**
+ * Loop into ordered list
+ * @param doc
+ */
 async function loopList(doc: any) {
   let parts: any = []
 
