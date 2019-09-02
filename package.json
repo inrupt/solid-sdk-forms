@@ -143,6 +143,6 @@
     "ldflex": "^2.5.1",
     "n3": "^1.1.1",
     "rollup-plugin-inject": "^3.0.1",
-    "solid-auth-client": "^2.3.0"
+    "solid-auth-client": "^2.3.1"
   }
 }
