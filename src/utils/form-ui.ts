@@ -75,7 +75,7 @@ async function getPropertyValue(field: string, property: string) {
  * @param document
  * @param partsPath
  */
-async function turtleToFormUi(document: any, userData: string, parentValue?: any) {
+async function turtleToFormUi(document: any) {
   let fields: any = {}
   const doc = await document
   const partsPath = 'http://www.w3.org/ns/ui#parts'
@@ -94,20 +94,10 @@ async function turtleToFormUi(document: any, userData: string, parentValue?: any
        * If property exist into the subject we added it into the json-ld object
        */
       if (property.includes('parts') && propertyValue) {
-        let layoutKey = await getPropertyValue(field, 'http://www.w3.org/ns/ui#property')
-        let userFieldValue = null
-
-        if (layoutKey && userData) {
-          userFieldValue = await data[userData][layoutKey]
-        }
-
-        partsFields = await turtleToFormUi(
-          data[field],
-          (userFieldValue && userFieldValue.value) || userData
-        )
+        partsFields = await turtleToFormUi(data[field])
       }
 
-      if (property.includes('property') && propertyValue) {
+      /* if (property.includes('property') && propertyValue) {
         if (userData || parentValue) {
           const value = await data[userData || parentValue][propertyValue]
           if (value && value.value) {
@@ -117,15 +107,14 @@ async function turtleToFormUi(document: any, userData: string, parentValue?: any
             fieldValue = { value: '', oldValue: '' }
           }
         }
-      }
+      } */
 
       const propertyKey: string = getPredicateName(property)
 
       let newField = {
         [subjectPrefix]: {
           ...fields[subjectPrefix],
-          [propertyKey]: Object.keys(partsFields).length === 0 ? propertyValue : partsFields,
-          ...fieldValue
+          [propertyKey]: Object.keys(partsFields).length === 0 ? propertyValue : partsFields
         }
       }
 
@@ -167,6 +156,108 @@ async function existDocument(document: string) {
 
   return result.status !== 404
 }
+/**
+ * Fill FormModel with user data pod
+ * @param modelUi
+ * @param podUri
+ */
+async function fillFormModel(modelUi: any, podUri: string) {
+  /**
+   * Get fields parts from Form Model
+   */
+  const parts = modelUi['ui:parts']
+  /**
+   * Get fields key into Form Model to loop over each field
+   */
+  const fields: any = Object.keys(modelUi['ui:parts'])
+  let newModelUi = modelUi
+
+  /**
+   * Loop into each fields and find the property into Form Model to
+   * match with pod property data
+   */
+  for await (const fieldValue of fields) {
+    const fieldObject = parts[fieldValue]
+    const property = fieldObject['ui:property']
+    let parentValue
+    let childModel
+    /**
+     * If field has parts(node to other links) we make a recursive to deep
+     * into the objects and fill with pod value
+     */
+    if (fieldObject['ui:parts'] && property) {
+      const podData = await data[podUri][property]
+      if (podData) {
+        let count = 0
+        /**
+         * Create unique id for field into parts also we keep the link data for multiple values
+         * adding reference
+         */
+        let randomId: any = Date.now()
+        childModel = { 'ui:parts': {} }
+        /**
+         * Loop into each value from pod and mach in the Form Model
+         */
+        for await (let field of data[podUri][property]) {
+          parentValue = field.value
+          randomId = `${randomId}${count}`
+
+          childModel = {
+            ...childModel,
+            ...fieldObject,
+            'ui:parts': {
+              ...childModel['ui:parts'],
+              [`id${randomId}`]: {
+                // 'ui:reference': fieldObject[''],
+                ...(await fillFormModel(fieldObject, parentValue)),
+                value: parentValue
+              }
+            }
+          }
+
+          count++
+        }
+      }
+    }
+    /**
+     * If field has parts but not property with need to loop into his parts
+     * to fill children fields values
+     */
+    if (fieldObject['ui:parts'] && !property) {
+      newModelUi = {
+        ...newModelUi,
+        'ui:reference': fieldValue,
+        ...(await fillFormModel(fieldObject, podUri))
+      }
+    }
+    /**
+     * Get parent default values for parent fields or single fields without
+     * parts
+     */
+    if (property) {
+      const field = await data[podUri][property]
+      parentValue = field && field.value
+    }
+
+    /**
+     * Create object value with field values
+     */
+    const objectValue = parentValue ? { value: parentValue, oldValue: parentValue } : null
+
+    newModelUi = {
+      ...newModelUi,
+      'ui:parts': {
+        ...newModelUi['ui:parts'],
+        [fieldValue]: {
+          ...fieldObject,
+          ...objectValue,
+          ...childModel
+        }
+      }
+    }
+  }
+  return newModelUi
+}
 
 /**
  * Convert turtle to formModel(JSON-LD)
@@ -175,21 +266,22 @@ async function existDocument(document: string) {
  */
 export async function convertFormModel(documentUri: any, documentPod: any) {
   const existDocumentPod = await existDocument(documentPod)
-  let userData = null
 
-  /* if (existDocumentPod) {
-    userData = await data[documentPod]
-  } */
-
-  const model = await turtleToFormUi(data[documentUri], documentPod)
-
-  return {
+  const model = await turtleToFormUi(data[documentUri])
+  let modelUi = {
     '@context': {
       ...CONTEXT['@context'],
       subject: subjectPrefix(documentUri)
     },
     'ui:parts': { ...model }
   }
+  if (!existDocumentPod) {
+    return modelUi
+  }
+
+  const modelWidthData = fillFormModel(modelUi, documentPod)
+
+  return modelWidthData
 }
 
 /**
