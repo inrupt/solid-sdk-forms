@@ -8,20 +8,18 @@ import { Meta } from '../interfaces'
 export class ShexFormModel {
   termFactory: any
   meta: Meta
-  schema: any
   graph: any
   iriRdftype: string
   iriDctitle: string
   iriUitype: string
 
-  constructor(schema: any) {
+  constructor(private schema: any) {
     this.termFactory = DataFactory
     this.graph = new Store()
     this.meta = { prefixes: schema._prefixes, base: window.location.href }
     this.iriRdftype = `${NS_RDF}type`
     this.iriDctitle = `${NS_DC}title`
     this.iriUitype = this.iriRdftype
-    this.schema = schema
   }
   /**
    * Convert SheEx to Form Model

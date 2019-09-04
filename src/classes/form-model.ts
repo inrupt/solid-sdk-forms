@@ -7,10 +7,7 @@ import { ShexFormModel } from './shex-form-model'
 import { SHEX_SCHEMA } from '../constants'
 
 export class FormModel {
-  url: string
-  constructor(url: string) {
-    this.url = url
-  }
+  constructor(private url: string) {}
   /**
    * @param {String} url the schema document url
    * @return {String} document extension
