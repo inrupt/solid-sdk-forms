@@ -1,15 +1,15 @@
 import shexParser from '@shexjs/parser'
 import shexCore from '@shexjs/core'
 import * as N3 from 'n3'
-import { ShExRSchema } from '../schemas'
-import { solidFetch } from '../utils'
+import { ShExRSchema } from '@schemas'
+import { solidFetch } from '@utils'
+import { SHEX_SCHEMA } from '@constants'
 import { ShexFormModel } from './shex-form-model'
-import { SHEX_SCHEMA } from '../constants'
 
 export class FormModel {
   constructor(private url: string) {}
   /**
-   * @param {String} url the schema document url
+   * @param {String} url The URL of the shape or schema
    * @return {String} document extension
    */
   schemaType = (url: String) => {
@@ -19,8 +19,8 @@ export class FormModel {
 
   /**
    *
-   * @param {String} schemaText the document content
-   * @param {String} document url
+   * @param {String} schemaText The Shape Schema
+   * @param {String} document The Document Url
    */
   parseShexC = (schemaText: String, url: String) => {
     try {
@@ -34,24 +34,40 @@ export class FormModel {
 
   /**
    * Convert ShEx to Turtle object
+   * We are using n3 library fro more information please go to: https://github.com/rdfjs/N3.js
    */
   parseTurtle = (schemaText: string, url: string) => {
     try {
+      /**
+       * N3.Store allows you to store triples in memory and find them fast.
+       */
       const graph = new N3.Store()
+      /**
+       * N3.Parser transforms Turtle, TriG, N-Triples, or N-Quads document into quads through a callback
+       */
       const parser = new N3.Parser({
         format: 'application/turtle',
         baseIRI: url
       })
+      /**
+       * Insert an array of quads
+       */
       graph.addQuads(parser.parse(schemaText))
 
       const shexRSchemaObj = shexParser.construct(url, null, { index: true }).parse(ShExRSchema)
       const graphParser = shexCore.Validator.construct(shexRSchemaObj, {})
+      /**
+       * Insert an array of quads
+       */
       const schemaRoot = graph.getQuads(null, shexCore.Util.RDF.type, SHEX_SCHEMA, '')[0].subject // !!check
       const val = graphParser.validate(
         shexCore.Util.makeN3DB(graph),
         schemaRoot,
         shexCore.Validator.start
-      ) // start shape
+      )
+      /**
+       * Convert ShEx to ShExJ
+       */
       return shexCore.Util.ShExRtoShExJ(
         shexCore.Util.valuesToSchema(shexCore.Util.valToValues(val))
       )

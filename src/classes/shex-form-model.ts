@@ -1,7 +1,7 @@
 import N3, { DataFactory, Store, Writer } from 'n3'
-import { NS_RDF, NS_DC, NS_UI, NS_LAYOUT, IRI_XsdString } from '../constants'
+import { NS_RDF, NS_DC, NS_UI, NS_LAYOUT, IRI_XsdString } from '@constants'
+import { Meta } from '@interfaces'
 import { ListObject } from './list-object'
-import { Meta } from '../interfaces'
 /**
  * Convert ShEx to Tim Form Model
  */

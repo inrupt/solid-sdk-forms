@@ -8,6 +8,7 @@ import builtins from 'rollup-plugin-node-builtins'
 import globals from 'rollup-plugin-node-globals'
 import requireContext from 'rollup-plugin-require-context'
 import babel from 'rollup-plugin-babel'
+import alias from 'rollup-plugin-alias';
 
 const pkg = require('./package.json')
 
@@ -49,6 +50,15 @@ export default {
     resolve({ browser: true, jsnext: true, main: true, modulesOnly: true }),
     // Resolve source maps to the original source
     sourceMaps(),
-    babel()
+    babel(),
+    alias({
+      resolve: ['.ts'],
+      entries:[
+        { find:'@alias', replacement: 'src/utils' },
+        { find:'@constants', replacement: 'src/constants' },
+        { find:'@interfaces', replacement: 'src/interfaces' },
+        { find:'@schemas', replacement: 'src/schemas' }
+      ]
+    })
   ],
 }

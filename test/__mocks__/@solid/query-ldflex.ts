@@ -11,6 +11,5 @@ const ldflex: any = {
 }
 ldflex['vcard:fn'] = ldflex
 ldflex['https://example.org/#me'] = ldflex['vcard:fn']
-// ldflex['https://example.org/#me'] = { ...ldflex, ...ldflex['vcard:hasPhoto'] };
 
 export default ldflex

@@ -1,6 +1,6 @@
 import data from '@solid/query-ldflex'
 import auth from 'solid-auth-client'
-import { CONTEXT } from '../constants'
+import { CONTEXT } from '@constants'
 
 /**
  * Find prefix context to add into object property
@@ -97,18 +97,6 @@ async function turtleToFormUi(document: any) {
         partsFields = await turtleToFormUi(data[field])
       }
 
-      /* if (property.includes('property') && propertyValue) {
-        if (userData || parentValue) {
-          const value = await data[userData || parentValue][propertyValue]
-          if (value && value.value) {
-            const { value: currenValue } = value
-            fieldValue = { value: currenValue, oldValue: currenValue }
-          } else {
-            fieldValue = { value: '', oldValue: '' }
-          }
-        }
-      } */
-
       const propertyKey: string = getPredicateName(property)
 
       let newField = {
@@ -157,7 +145,7 @@ async function existDocument(document: string) {
   return result.status !== 404
 }
 /**
- * Fill FormModel with user data pod
+ * Fill Form Model with user data pod
  * @param modelUi
  * @param podUri
  */

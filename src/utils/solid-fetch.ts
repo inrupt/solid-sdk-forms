@@ -7,6 +7,10 @@ interface FetchRequest {
   body: ReadableStream<Uint8Array> | null
 }
 
+/**
+ * Fetch Schema document from pod
+ * @param file
+ */
 export const fetchSchema = async (file: RequestInfo) => {
   try {
     const schemaDocument = await auth.fetch(file, {
@@ -27,6 +31,10 @@ export const fetchSchema = async (file: RequestInfo) => {
   }
 }
 
+/**
+ * Check if resource exist into pod
+ * @param documentUri
+ */
 export const existDocument = async (documentUri: RequestInfo): Promise<FetchRequest> => {
   return auth.fetch(documentUri, {
     headers: {
@@ -35,6 +43,11 @@ export const existDocument = async (documentUri: RequestInfo): Promise<FetchRequ
   })
 }
 
+/**
+ * Create document on pod
+ * @param documentUri
+ * @param body
+ */
 export const createDocument = async (
   documentUri: RequestInfo,
   body: string = ''
@@ -53,7 +66,10 @@ export const createDocument = async (
 
   return result
 }
-
+/**
+ * Fetch document from pod if exist using ldflex
+ * @param documentUri
+ */
 export const fetchLdflexDocument = async (documentUri: RequestInfo) => {
   try {
     if (documentUri && documentUri !== '') {
@@ -71,7 +87,10 @@ export const fetchLdflexDocument = async (documentUri: RequestInfo) => {
     return error
   }
 }
-
+/**
+ * Get basic user pod info like name and photo
+ * @param webId
+ */
 export const getBasicPod = async (webId: string) => {
   try {
     if (webId) {

@@ -14,7 +14,14 @@
     "outDir": "dist/lib",
     "typeRoots": [
       "node_modules/@types"
-    ]
+    ],
+    "baseUrl": "./",
+    "paths": {
+      "@constants": ["src/constants"],
+      "@utils": ["src/utils"],
+      "@interfaces": ["src/interfaces"],
+      "@schemas": ["src/schemas"]
+    }
   },
   "include": [
     "src"
