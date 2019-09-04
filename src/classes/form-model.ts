@@ -110,7 +110,7 @@ export class FormModel {
 
   parseShexJ = (schemaText: string, url: string) => {
     try {
-      return this.relativeize(JSON.parse(schemaText), url)
+      return this.normalize(JSON.parse(schemaText), url)
     } catch (error) {
       throw Error(error)
     }
@@ -118,13 +118,13 @@ export class FormModel {
   /**
    * Parse Schema to Schema object
    */
-  relativeize = (object: any, base: any) => {
+  normalize = (object: any, base: any) => {
     for (let key in object) {
       let item = object[key]
       if (key === 'id' || (key === 'valueExpr' && typeof object[key] === 'string')) {
         object[key] = new URL(object[key], base).href
       } else if (typeof item === 'object') {
-        this.relativeize(item, base)
+        this.normalize(item, base)
       }
     }
     return object
