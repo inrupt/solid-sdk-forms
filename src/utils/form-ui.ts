@@ -241,8 +241,12 @@ async function fillFormModel(modelUi: any, podUri: string) {
 
     /**
      * Create object value with field values
+     * Inlcude link only when is a link and type is not Multiple
      */
-    const objectValue = parentValue ? { value: parentValue, oldValue: parentValue } : null
+    const objectValue =
+      parentValue && !fieldObject['rdf:type'].includes('Multiple')
+        ? { value: parentValue, oldValue: parentValue }
+        : null
 
     newModelUi = {
       ...newModelUi,
