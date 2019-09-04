@@ -1,5 +1,6 @@
 import data from '@solid/query-ldflex'
 import auth from 'solid-auth-client'
+import uuid from 'uuid'
 import { CONTEXT } from '@constants'
 
 /**
@@ -198,7 +199,8 @@ async function fillFormModel(modelUi: any, podUri: string) {
               [`id${randomId}`]: {
                 // 'ui:reference': fieldObject[''],
                 ...(await fillFormModel(fieldObject, parentValue)),
-                value: parentValue
+                value: parentValue,
+                name: uuid()
               }
             }
           }
@@ -233,7 +235,7 @@ async function fillFormModel(modelUi: any, podUri: string) {
      */
     const objectValue =
       parentValue && !fieldObject['rdf:type'].includes('Multiple')
-        ? { value: parentValue, oldValue: parentValue }
+        ? { value: parentValue, oldValue: parentValue, name: uuid() }
         : null
 
     newModelUi = {
