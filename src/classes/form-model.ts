@@ -115,7 +115,9 @@ export class FormModel {
       throw Error(error)
     }
   }
-
+  /**
+   * Parse Schema to Schema object
+   */
   relativeize = (object: any, base: any) => {
     for (let key in object) {
       let item = object[key]
@@ -128,7 +130,7 @@ export class FormModel {
     return object
   }
   /**
-   * Parse schema to Tim Form Model
+   * Parse schema to Form Model
    */
   parseShEx = async (): Promise<any> => {
     try {

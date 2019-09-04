@@ -1,9 +1,19 @@
 import N3, { DataFactory, Store, Writer } from 'n3'
-import { NS_RDF, NS_DC, NS_UI, NS_LAYOUT, IRI_XsdString } from '@constants'
+import {
+  NS_RDF,
+  NS_DC,
+  NS_UI,
+  NS_LAYOUT,
+  IRI_XsdString,
+  TRIPLE_CONSTRAINT,
+  EACH_OF,
+  NODE_CONSTRAINT
+} from '@constants'
 import { Meta } from '@interfaces'
 import { ListObject } from './list-object'
 /**
- * Convert ShEx to Tim Form Model
+ * Convert ShEx to Form Model
+ * We are using n3 library for more info please go to: https://github.com/rdfjs/N3.js/blob/master/README.md
  */
 export class ShexFormModel {
   termFactory: any
@@ -42,7 +52,7 @@ export class ShexFormModel {
       'start' in this.schema ? this.derefShapeExpression(schema.start) : schema.shapes[0]
 
     /**
-     * Run into shape to create turtle object
+     * Traverse the shape to create turtle object
      */
     this.walkShape(start, rootFormTerm, this.localName(start.id), namedNode, literal, blankNode)
 
@@ -65,20 +75,28 @@ export class ShexFormModel {
   }
 
   /**
-   * Define shape type into formModel
+   * Define shape type into Form Model
    * @param iri
    */
   localName(iri: string) {
     const { meta } = this
-
+    /**
+     * If iri has _: already has the type format
+     */
     if (iri.startsWith('_:')) {
       return iri
     }
     let prefix = Object.keys(meta.prefixes).find(p => iri.startsWith(meta.prefixes[p]))
 
+    /**
+     * Create iri type using string format <>
+     */
     if (prefix) {
       return prefix + `:${iri.substr(meta[prefix].length)}`
     }
+    /**
+     * Return the type string
+     */
     return `<${iri.startsWith(meta.base) ? iri.substr(meta.base.length) : iri}>`
   }
   /**
@@ -106,7 +124,7 @@ export class ShexFormModel {
     return this.schema.shapes.find((se: any) => se.id === goal)
   }
   /**
-   * Run hover shape and create the object with turtle format
+   * Traverse the shape and create the object with turtle format
    * @param shape
    * @param formTerm
    * @param path
@@ -119,16 +137,21 @@ export class ShexFormModel {
       const { graph } = this
       const sanitizedPath = path.replace(/[^A-Za-z_-]/g, '_')
       const label = this.findTitle(shape)
-
+      /**
+       * insert one quad into n3 store
+       */
       graph.addQuad(formTerm, namedNode(`${NS_RDF}type`), namedNode(`${NS_UI}Form`))
 
       if (label) {
+        /**
+         * insert one quad into n3 store
+         */
         graph.addQuad(formTerm, namedNode(this.iriDctitle), literal(label.object.value))
       }
 
       let currentShape = shape
 
-      if (!('expression' in shape) || shape.expression.type !== 'EachOf') {
+      if (!('expression' in shape) || shape.expression.type !== EACH_OF) {
         currentShape = {
           ...currentShape,
           expression: { expressions: [currentShape.expression] }
@@ -141,8 +164,10 @@ export class ShexFormModel {
       if (currentShape && currentShape.expression && currentShape.expression.expressions) {
         currentShape.expression.expressions.forEach((te: any, i: any) => {
           const tePath = `${path}/[${i}]`
-          if (te.type !== 'TripleConstraint') {
-            throw Error(`expected ${tePath} of type TripleConstraint, got: ${JSON.stringify(te)}`)
+          if (te.type !== TRIPLE_CONSTRAINT) {
+            throw Error(
+              `expected ${tePath} of type ${TRIPLE_CONSTRAINT}, got: ${JSON.stringify(te)}`
+            )
           }
 
           const fieldTerm =
@@ -168,6 +193,10 @@ export class ShexFormModel {
                   'id' in te
                     ? this.jsonLdtoRdf(`${te.id}Comment`) // !! could collide, but easy to debug
                     : blankNode(`${sanitizedPath}_parts_${i}_comment`)
+                /**
+                 * insert one quad into n3 store
+                 */
+
                 graph.addQuad(commentTerm, namedNode(this.iriUitype), namedNode(`${NS_UI}Comment`))
                 graph.addQuad(
                   commentTerm,
@@ -177,8 +206,14 @@ export class ShexFormModel {
                 // add the parts list entry for comment
                 parts.add(commentTerm, `${sanitizedPath}_parts_${i}_comment`)
               } else if (a.predicate.includes('label')) {
+                /**
+                 * insert one quad into n3 store
+                 */
                 graph.addQuad(fieldTerm, namedNode(`${NS_UI}label`), this.jsonLdtoRdf(a.object))
               } else {
+                /**
+                 * insert one quad into n3 store
+                 */
                 graph.addQuad(fieldTerm, this.jsonLdtoRdf(a.predicate), this.jsonLdtoRdf(a.object))
               }
             })
@@ -208,7 +243,7 @@ export class ShexFormModel {
               literal,
               blankNode
             )
-          } else if (valueExpr.type === 'NodeConstraint') {
+          } else if (valueExpr.type === NODE_CONSTRAINT) {
             let nc = valueExpr
             if ('maxlength' in nc) {
               graph.addQuad(

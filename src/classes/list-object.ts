@@ -9,7 +9,8 @@ export class ListObject {
     this.NS_Rdf = NS_RDF
   }
   /**
-   *
+   * Add object into Quad using n3
+   * For more information please go to: https://github.com/rdfjs/N3.js/blob/master/README.md
    * @param elt
    * @param label
    */
