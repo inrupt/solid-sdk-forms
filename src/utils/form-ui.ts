@@ -168,58 +168,12 @@ async function fillFormModel(modelUi: any, podUri: string) {
   for await (const fieldValue of fields) {
     const fieldObject = parts[fieldValue]
     const property = fieldObject['ui:property']
-    let parentValue
-    let childModel
-    /**
-     * If field has parts(node to other links) we make a recursive to deep
-     * into the objects and fill with pod value
-     */
-    if (fieldObject['ui:parts'] && property) {
-      const podData = await data[podUri][property]
-      if (podData) {
-        let count = 0
-        /**
-         * Create unique id for field into parts also we keep the link data for multiple values
-         * adding reference
-         */
-        let randomId: any = Date.now()
-        childModel = { 'ui:parts': {} }
-        /**
-         * Loop into each value from pod and mach in the Form Model
-         */
-        for await (let field of data[podUri][property]) {
-          parentValue = field.value
-          randomId = `${randomId}${count}`
-
-          childModel = {
-            ...childModel,
-            ...fieldObject,
-            'ui:parts': {
-              ...childModel['ui:parts'],
-              [`id${randomId}`]: {
-                // 'ui:reference': fieldObject[''],
-                ...(await fillFormModel(fieldObject, parentValue)),
-                value: parentValue,
-                name: uuid()
-              }
-            }
-          }
-
-          count++
-        }
-      }
-    }
-    /**
-     * If field has parts but not property with need to loop into his parts
-     * to fill children fields values
-     */
-    if (fieldObject['ui:parts'] && !property) {
-      newModelUi = {
-        ...newModelUi,
-        'ui:reference': fieldValue,
-        ...(await fillFormModel(fieldObject, podUri))
-      }
-    }
+    const isMultiple = fieldObject['rdf:type'].includes('Multiple')
+    const isGroup = fieldObject['rdf:type'].includes('Group')
+    const hasParts = fieldObject['ui:parts']
+    let parentValue = ''
+    let childs: any = {}
+    let updatedField: any = []
     /**
      * Get parent default values for parent fields or single fields without
      * parts
@@ -228,25 +182,70 @@ async function fillFormModel(modelUi: any, podUri: string) {
       const field = await data[podUri][property]
       parentValue = field && field.value
     }
+    /**
+     * If field has parts call recursive function to deep into each children fields
+     */
+    if (hasParts) {
+      /**
+       * If field is multiple will remove children subject and add custom node id
+       */
+      if (isMultiple) {
+        for await (let fieldData of data[podUri][property]) {
+          const { value } = fieldData
+
+          childs = {
+            'ui:parts': {
+              ...childs['ui:parts'],
+              [uuid()]: {
+                'ui:name': uuid(),
+                'ui:value': value,
+                ...(await fillFormModel(fieldObject, parentValue))
+              }
+            }
+          }
+        }
+      }
+
+      if (isGroup) {
+        newModelUi = {
+          ...newModelUi,
+          'ui:reference': fieldValue,
+          ...(await fillFormModel(fieldObject, podUri))
+        }
+      }
+    }
 
     /**
      * Create object value with field values
      * Inlcude link only when is a link and type is not Multiple
      */
     const objectValue =
-      parentValue && !fieldObject['rdf:type'].includes('Multiple')
-        ? { value: parentValue, oldValue: parentValue, name: uuid() }
+      parentValue && !isMultiple
+        ? {
+            'ui:value': parentValue,
+            'ui:oldValue': parentValue,
+            'ui:name': uuid()
+          }
         : null
+
+    /**
+     * Updated field if value is not a group
+     */
+    updatedField = isGroup
+      ? updatedField
+      : {
+          [fieldValue]: {
+            ...fieldObject,
+            ...objectValue,
+            ...childs
+          }
+        }
 
     newModelUi = {
       ...newModelUi,
       'ui:parts': {
         ...newModelUi['ui:parts'],
-        [fieldValue]: {
-          ...fieldObject,
-          ...objectValue,
-          ...childModel
-        }
+        ...updatedField
       }
     }
   }
