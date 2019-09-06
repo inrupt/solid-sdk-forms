@@ -2,8 +2,6 @@ import data from '@solid/query-ldflex'
 import auth from 'solid-auth-client'
 import uuid from 'uuid'
 import { CONTEXT } from '@constants'
-import { FormModel } from 'src/solid-forms'
-import { NamedNode } from 'n3'
 
 /**
  * Find prefix context to add into object property
@@ -193,14 +191,15 @@ async function fillFormModel(modelUi: any, podUri: string) {
       if (isMultiple) {
         for await (let fieldData of data[podUri][property]) {
           const { value } = fieldData
+          const uniqueName = uuid()
 
           childs = {
             'ui:parts': {
               ...childs['ui:parts'],
-              [uuid()]: {
-                'ui:name': uuid(),
+              [uniqueName]: {
+                'ui:name': uniqueName,
                 'ui:value': value,
-                ...(await fillFormModel(fieldObject, parentValue))
+                ...(await fillFormModel(fieldObject, value))
               }
             }
           }
