@@ -2,6 +2,8 @@ import data from '@solid/query-ldflex'
 import auth from 'solid-auth-client'
 import uuid from 'uuid'
 import { CONTEXT } from '@constants'
+import { FormModel } from 'src/solid-forms'
+import { NamedNode } from 'n3'
 
 /**
  * Find prefix context to add into object property
@@ -85,7 +87,6 @@ async function turtleToFormUi(document: any) {
   for await (const field of parts) {
     const subjectKey: string = getPredicateName(field)
     const subjectPrefix = `subject:${subjectKey}`
-    let fieldValue = {}
 
     for await (const property of data[field].properties) {
       let partsFields: any = {}
@@ -226,7 +227,7 @@ async function fillFormModel(modelUi: any, podUri: string) {
             'ui:oldValue': parentValue,
             'ui:name': uuid()
           }
-        : null
+        : { 'ui:name': uuid() }
 
     /**
      * Updated field if value is not a group
@@ -291,4 +292,88 @@ async function loopList(doc: any) {
   }
 
   return parts
+}
+
+export function cleanFieldNode(field: any) {
+  let updatedField = field
+
+  if (updatedField && updatedField['ui:parts']) {
+    for (const childKey in updatedField['ui:parts']) {
+      updatedField = {
+        ...updatedField,
+        'ui:parts': {
+          ...updatedField['ui:parts'],
+          [childKey]: {
+            ...updatedField['ui:parts'][childKey],
+            ...cleanFieldNode(updatedField[childKey])
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    ...updatedField,
+    ['ui:value']: '',
+    ['ui:oldValue']: '',
+    ['ui:name']: uuid()
+  }
+}
+
+export function getSubjectLinkId(currentLink: string) {
+  if (currentLink.includes('#')) {
+    const id = Date.now()
+    return `${currentLink.split('#')[0]}#${id}`
+  }
+}
+
+export function addNewField(nodeName: string, formModel: any) {
+  let found = false
+  let partsObject = formModel['ui:parts']
+
+  function findField(nodeName: string, model: any) {
+    for (const fieldKey in model) {
+      const currentField = model[fieldKey]
+
+      if (currentField['ui:name'] === nodeName && currentField['rdf:type'].includes('Multiple')) {
+        const copiedField = Object.keys(currentField['ui:parts'])[0]
+        const idLink = getSubjectLinkId(currentField['ui:parts'][copiedField]['ui:value'])
+        const uniqueName = uuid()
+
+        model = {
+          ...model,
+          [fieldKey]: {
+            ...currentField,
+            ['ui:parts']: {
+              ...currentField['ui:parts'],
+              [uniqueName]: {
+                ...cleanFieldNode(currentField['ui:parts'][copiedField]),
+                'ui:name': uniqueName,
+                'ui:value': idLink
+              }
+            }
+          }
+        }
+        found = true
+        break
+      } else if (currentField['ui:parts']) {
+        model = {
+          ...model,
+          [fieldKey]: {
+            ...currentField,
+            ...findField(nodeName, currentField['ui:parts'])
+          }
+        }
+
+        if (found) {
+          break
+        }
+      }
+    }
+    return model
+  }
+
+  const updatedParts = findField(nodeName, partsObject)
+
+  return { ...formModel, 'ui:parts': { ...updatedParts } }
 }
