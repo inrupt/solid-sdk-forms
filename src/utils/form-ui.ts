@@ -376,3 +376,39 @@ export function addNewField(nodeName: string, formModel: any) {
 
   return { ...formModel, 'ui:parts': { ...updatedParts } }
 }
+
+export function deleteField(field: string, model: any) {
+  const partsObject = model['ui:parts']
+  let found = false
+
+  function deleteRecursive(field: string, model: any) {
+    for (const fieldKey in model) {
+      if (model[fieldKey]['ui:name'] === field) {
+        const { [fieldKey]: value, ...withoutProperty } = model
+
+        model = withoutProperty
+        found = true
+        break
+      } else if (model[fieldKey]['ui:parts']) {
+        model = {
+          ...model,
+          [fieldKey]: {
+            ...model[fieldKey],
+            ['ui:parts']: {
+              ...deleteRecursive(field, model[fieldKey]['ui:parts'])
+            }
+          }
+        }
+
+        if (found) {
+          break
+        }
+      }
+    }
+    return model
+  }
+
+  const updatedModel = deleteRecursive(field, partsObject)
+
+  return { ...model, 'ui:parts': { ...updatedModel } }
+}
