@@ -98,13 +98,14 @@ async function turtleToFormUi(document: any) {
       }
 
       const propertyKey: string = getPredicateName(property)
-
       let newField = {
         [subjectPrefix]: {
           ...fields[subjectPrefix],
           [propertyKey]: Object.keys(partsFields).length === 0 ? propertyValue : partsFields
         }
       }
+
+      console.log(newField)
 
       if (!propertyValue) {
         newField = {}
@@ -208,7 +209,7 @@ async function fillFormModel(modelUi: any, podUri: string) {
 
       if (isGroup) {
         newModelUi = {
-          ...newModelUi,
+          // ...newModelUi,
           'ui:reference': fieldValue,
           ...(await fillFormModel(fieldObject, podUri))
         }
@@ -268,6 +269,7 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     },
     'ui:parts': { ...model }
   }
+
   if (!existDocumentPod) {
     return modelUi
   }
@@ -291,124 +293,4 @@ async function loopList(doc: any) {
   }
 
   return parts
-}
-
-export function cleanFieldNode(field: any) {
-  let updatedField = field
-
-  if (updatedField && updatedField['ui:parts']) {
-    for (const childKey in updatedField['ui:parts']) {
-      updatedField = {
-        ...updatedField,
-        'ui:parts': {
-          ...updatedField['ui:parts'],
-          [childKey]: {
-            ...updatedField['ui:parts'][childKey],
-            ...cleanFieldNode(updatedField[childKey])
-          }
-        }
-      }
-    }
-  }
-
-  return {
-    ...updatedField,
-    ['ui:value']: '',
-    ['ui:oldValue']: '',
-    ['ui:name']: uuid()
-  }
-}
-
-export function getSubjectLinkId(currentLink: string) {
-  if (currentLink.includes('#')) {
-    const id = Date.now()
-    return `${currentLink.split('#')[0]}#${id}`
-  }
-}
-
-export function addNewField(nodeName: string, formModel: any) {
-  let found = false
-  let partsObject = formModel['ui:parts']
-
-  function findField(nodeName: string, model: any) {
-    for (const fieldKey in model) {
-      const currentField = model[fieldKey]
-
-      if (currentField['ui:name'] === nodeName && currentField['rdf:type'].includes('Multiple')) {
-        const copiedField = Object.keys(currentField['ui:parts'])[0]
-        const idLink = getSubjectLinkId(currentField['ui:parts'][copiedField]['ui:value'])
-        const uniqueName = uuid()
-
-        model = {
-          ...model,
-          [fieldKey]: {
-            ...currentField,
-            ['ui:parts']: {
-              ...currentField['ui:parts'],
-              [uniqueName]: {
-                ...cleanFieldNode(currentField['ui:parts'][copiedField]),
-                'ui:name': uniqueName,
-                'ui:value': idLink
-              }
-            }
-          }
-        }
-        found = true
-        break
-      } else if (currentField['ui:parts']) {
-        model = {
-          ...model,
-          [fieldKey]: {
-            ...currentField,
-            ...findField(nodeName, currentField['ui:parts'])
-          }
-        }
-
-        if (found) {
-          break
-        }
-      }
-    }
-    return model
-  }
-
-  const updatedParts = findField(nodeName, partsObject)
-
-  return { ...formModel, 'ui:parts': { ...updatedParts } }
-}
-
-export function deleteField(field: string, model: any) {
-  const partsObject = model['ui:parts']
-  let found = false
-
-  function deleteRecursive(field: string, model: any) {
-    for (const fieldKey in model) {
-      if (model[fieldKey]['ui:name'] === field) {
-        const { [fieldKey]: value, ...withoutProperty } = model
-
-        model = withoutProperty
-        found = true
-        break
-      } else if (model[fieldKey]['ui:parts']) {
-        model = {
-          ...model,
-          [fieldKey]: {
-            ...model[fieldKey],
-            ['ui:parts']: {
-              ...deleteRecursive(field, model[fieldKey]['ui:parts'])
-            }
-          }
-        }
-
-        if (found) {
-          break
-        }
-      }
-    }
-    return model
-  }
-
-  const updatedModel = deleteRecursive(field, partsObject)
-
-  return { ...model, 'ui:parts': { ...updatedModel } }
 }
