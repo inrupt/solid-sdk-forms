@@ -157,6 +157,7 @@ export class FormActions {
           }
         }
       }
+      return model
     }
 
     const updatedModel = findRecursive(name, newValue, partsObject)
