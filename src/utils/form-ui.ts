@@ -105,7 +105,7 @@ async function turtleToFormUi(document: any) {
         }
       }
 
-      console.log(newField)
+      // console.log(newField)
 
       if (!propertyValue) {
         newField = {}
@@ -150,7 +150,12 @@ async function existDocument(document: string) {
  * @param modelUi
  * @param podUri
  */
-async function fillFormModel(modelUi: any, podUri: string) {
+async function fillFormModel(
+  modelUi: any,
+  podUri: string,
+  parentProperty?: string,
+  parentUri?: string
+) {
   /**
    * Get fields parts from Form Model
    */
@@ -174,6 +179,7 @@ async function fillFormModel(modelUi: any, podUri: string) {
     let parentValue = ''
     let childs: any = {}
     let updatedField: any = []
+    // console.log(podUri, 'podUri')
     /**
      * Get parent default values for parent fields or single fields without
      * parts
@@ -190,6 +196,7 @@ async function fillFormModel(modelUi: any, podUri: string) {
        * If field is multiple will remove children subject and add custom node id
        */
       if (isMultiple) {
+        // console.log(podUri, property)
         for await (let fieldData of data[podUri][property]) {
           const { value } = fieldData
           const uniqueName = uuid()
@@ -200,7 +207,7 @@ async function fillFormModel(modelUi: any, podUri: string) {
               [uniqueName]: {
                 'ui:name': uniqueName,
                 'ui:value': value,
-                ...(await fillFormModel(fieldObject, value))
+                ...(await fillFormModel(fieldObject, value, property, podUri))
               }
             }
           }
@@ -208,8 +215,13 @@ async function fillFormModel(modelUi: any, podUri: string) {
       }
 
       if (isGroup) {
+        const parentPro =
+          parentProperty && parentUri
+            ? { 'ui:parentProperty': parentProperty, 'ui:base': parentUri }
+            : {}
         newModelUi = {
           // ...newModelUi,
+          ...parentPro,
           'ui:reference': fieldValue,
           ...(await fillFormModel(fieldObject, podUri))
         }
@@ -225,7 +237,8 @@ async function fillFormModel(modelUi: any, podUri: string) {
         ? {
             'ui:value': parentValue,
             'ui:oldValue': parentValue,
-            'ui:name': uuid()
+            'ui:name': uuid(),
+            'ui:base': podUri
           }
         : { 'ui:name': uuid() }
 
@@ -293,4 +306,10 @@ async function loopList(doc: any) {
   }
 
   return parts
+}
+
+export function suffixFromJsonLd(predicate: string, context: any): string {
+  const suffix = predicate.split(':')
+  // console.log(context, suffix, 'suffix')
+  return `${context[suffix[0]]}${suffix[1]}`
 }
