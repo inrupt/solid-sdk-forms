@@ -33,3 +33,12 @@ export const CONTEXT: any = {
     }
   }
 }
+export const UI = {
+  PARTS: 'ui:parts',
+  PROPERTY: 'ui:property',
+  PARENT_PROPERTY: 'ui:parentProperty',
+  BASE: 'ui:base',
+  OLDVALUE: 'ui:oldValue',
+  VALUE: 'ui:value',
+  NAME: 'ui:name'
+}
