@@ -33,10 +33,12 @@ export const CONTEXT: any = {
     }
   }
 }
-export const UI_PARTS = 'ui:parts'
-export const UI_PROPERTY = 'ui:property'
-export const UI_PARENT_PROPERTY = 'ui:parentProperty'
-export const UI_BASE = 'ui:base'
-export const UI_OLDVALUE = 'ui:oldValue'
-export const UI_VALUE = 'ui:value'
-export const UI_NAME = 'ui:name'
+export const UI = {
+  PARTS: 'ui:parts',
+  PROPERTY: 'ui:property',
+  PARENT_PROPERTY: 'ui:parentProperty',
+  BASE: 'ui:base',
+  OLDVALUE: 'ui:oldValue',
+  VALUE: 'ui:value',
+  NAME: 'ui:name'
+}

@@ -105,8 +105,6 @@ async function turtleToFormUi(document: any) {
         }
       }
 
-      // console.log(newField)
-
       if (!propertyValue) {
         newField = {}
       }
@@ -179,7 +177,7 @@ async function fillFormModel(
     let parentValue = ''
     let childs: any = {}
     let updatedField: any = []
-    // console.log(podUri, 'podUri')
+
     /**
      * Get parent default values for parent fields or single fields without
      * parts
@@ -196,7 +194,6 @@ async function fillFormModel(
        * If field is multiple will remove children subject and add custom node id
        */
       if (isMultiple) {
-        // console.log(podUri, property)
         for await (let fieldData of data[podUri][property]) {
           const { value } = fieldData
           const uniqueName = uuid()
@@ -310,6 +307,5 @@ async function loopList(doc: any) {
 
 export function suffixFromJsonLd(predicate: string, context: any): string {
   const suffix = predicate.split(':')
-  // console.log(context, suffix, 'suffix')
   return `${context[suffix[0]]}${suffix[1]}`
 }

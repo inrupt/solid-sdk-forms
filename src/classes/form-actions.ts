@@ -1,15 +1,7 @@
 import uuid from 'uuid'
 import data from '@solid/query-ldflex'
 import { namedNode } from '@rdfjs/data-model'
-import {
-  UI_PARTS,
-  UI_PROPERTY,
-  UI_PARENT_PROPERTY,
-  UI_BASE,
-  UI_OLDVALUE,
-  UI_VALUE,
-  UI_NAME
-} from '@constants'
+import { UI } from '@constants'
 
 /**
  * FormAction class to managament Form Model forms on solid
@@ -32,14 +24,14 @@ export class FormActions {
   static cleanFieldNode = (field: any) => {
     let updatedField = field
 
-    if (updatedField && updatedField[UI_PARTS]) {
-      for (const childKey in updatedField[UI_PARTS]) {
+    if (updatedField && updatedField[UI.PARTS]) {
+      for (const childKey in updatedField[UI.PARTS]) {
         updatedField = {
           ...updatedField,
-          [UI_PARTS]: {
-            ...updatedField[UI_PARTS],
+          [UI.PARTS]: {
+            ...updatedField[UI.PARTS],
             [childKey]: {
-              ...updatedField[UI_PARTS][childKey],
+              ...updatedField[UI.PARTS][childKey],
               ...FormActions.cleanFieldNode(updatedField[childKey])
             }
           }
@@ -49,9 +41,9 @@ export class FormActions {
 
     return {
       ...updatedField,
-      [UI_VALUE]: '',
-      [UI_OLDVALUE]: '',
-      [UI_NAME]: uuid()
+      [UI.VALUE]: '',
+      [UI.OLDVALUE]: '',
+      [UI.NAME]: uuid()
     }
   }
   /**
@@ -72,22 +64,22 @@ export class FormActions {
       const currentField = this.formObject[key]
 
       if (currentField) {
-        const predicate = currentField[UI_PROPERTY]
+        const predicate = currentField[UI.PROPERTY]
         let podData
 
         if (currentField.parent) {
-          podData = data[currentField.parent[UI_VALUE]][predicate]
-          if (currentField[UI_OLDVALUE] !== '') {
+          podData = data[currentField.parent[UI.VALUE]][predicate]
+          if (currentField[UI.OLDVALUE] !== '') {
             await podData.set(currentField.value)
           } else {
             const { parent } = currentField
-            await data[parent[UI_BASE]][parent[UI_PARENT_PROPERTY]].add(namedNode(parent[UI_VALUE]))
+            await data[parent[UI.BASE]][parent[UI.PARENT_PROPERTY]].add(namedNode(parent[UI.VALUE]))
             await podData.add(currentField.value)
           }
         } else {
-          podData = data[currentField[UI_BASE]][predicate]
+          podData = data[currentField[UI.BASE]][predicate]
 
-          if (currentField[UI_OLDVALUE]) {
+          if (currentField[UI.OLDVALUE]) {
             await podData.set(currentField.value)
           } else {
             await podData.add(currentField.value)
@@ -97,7 +89,7 @@ export class FormActions {
         /**
          * Update ui:value and  ui:oldValue on formModel and reset formObject
          */
-        this.updateFieldModel(currentField[UI_NAME], currentField.value)
+        this.updateFieldModel(currentField[UI.NAME], currentField.value)
       }
     }
     this.resetFormObject()
@@ -106,13 +98,13 @@ export class FormActions {
    * Delete field from pod
    */
   static deleteFieldPod = async (field: any) => {
-    if (field[UI_PARENT_PROPERTY]) {
+    if (field[UI.PARENT_PROPERTY]) {
       /**
        * Delete field from  link data reference
        */
-      await data[field[UI_BASE]][field[UI_PARENT_PROPERTY]].delete(namedNode(field[UI_VALUE]))
+      await data[field[UI.BASE]][field[UI.PARENT_PROPERTY]].delete(namedNode(field[UI.VALUE]))
     } else {
-      await data[field[UI_BASE]][field[UI_PROPERTY]].delete(field[UI_VALUE])
+      await data[field[UI.BASE]][field[UI.PROPERTY]].delete(field[UI.VALUE])
     }
   }
   /**
@@ -125,29 +117,29 @@ export class FormActions {
    * Field field object into Form Model
    */
   updateFieldModel = (name: string, newValue: string) => {
-    const partsObject = this.formModel[UI_PARTS]
+    const partsObject = this.formModel[UI.PARTS]
     let found = false
 
     function findRecursive(name: string, value: string, model: any): any {
       for (const fieldKey in model) {
-        if (model[fieldKey][UI_NAME] === name) {
+        if (model[fieldKey][UI.NAME] === name) {
           model = {
             ...model,
             [fieldKey]: {
               ...model[fieldKey],
-              [UI_VALUE]: newValue,
-              [UI_OLDVALUE]: newValue
+              [UI.VALUE]: newValue,
+              [UI.OLDVALUE]: newValue
             }
           }
           found = true
           break
-        } else if (model[fieldKey][UI_PARTS]) {
+        } else if (model[fieldKey][UI.PARTS]) {
           model = {
             ...model,
             [fieldKey]: {
               ...model[fieldKey],
-              [UI_PARTS]: {
-                ...findRecursive(name, value, model[fieldKey][UI_PARTS])
+              [UI.PARTS]: {
+                ...findRecursive(name, value, model[fieldKey][UI.PARTS])
               }
             }
           }
@@ -164,7 +156,7 @@ export class FormActions {
       /**
        * Update private formModel store
        */
-      this.formModel = { ...this.formModel, [UI_PARTS]: { ...updatedModel } }
+      this.formModel = { ...this.formModel, [UI.PARTS]: { ...updatedModel } }
 
       return this.formModel
     } catch (error) {
@@ -176,7 +168,7 @@ export class FormActions {
    * Delete field into Form Model Object
    */
   deleteField = async (field: string) => {
-    const partsObject = this.formModel[UI_PARTS]
+    const partsObject = this.formModel[UI.PARTS]
     let found = false
 
     async function deleteRecursive(field: string, model: any) {
@@ -184,7 +176,7 @@ export class FormActions {
         const modelKeys = Object.keys(model)
 
         for await (const fieldKey of modelKeys) {
-          if (model[fieldKey][UI_NAME] === field) {
+          if (model[fieldKey][UI.NAME] === field) {
             await FormActions.deleteFieldPod(model[fieldKey])
 
             const { [fieldKey]: value, ...withoutProperty } = model
@@ -192,13 +184,13 @@ export class FormActions {
             model = withoutProperty
             found = true
             break
-          } else if (model[fieldKey][UI_PARTS]) {
+          } else if (model[fieldKey][UI.PARTS]) {
             model = {
               ...model,
               [fieldKey]: {
                 ...model[fieldKey],
-                [UI_PARTS]: {
-                  ...(await deleteRecursive(field, model[fieldKey][UI_PARTS]))
+                [UI.PARTS]: {
+                  ...(await deleteRecursive(field, model[fieldKey][UI.PARTS]))
                 }
               }
             }
@@ -218,7 +210,7 @@ export class FormActions {
       /**
        * Update private formModel store
        */
-      this.formModel = { ...this.formModel, [UI_PARTS]: { ...updatedModel } }
+      this.formModel = { ...this.formModel, [UI.PARTS]: { ...updatedModel } }
 
       return this.formModel
     } catch (error) {
@@ -230,39 +222,39 @@ export class FormActions {
    */
   addNewField = (nodeName: string) => {
     let found = false
-    let partsObject = this.formModel[UI_PARTS]
+    let partsObject = this.formModel[UI.PARTS]
 
     function findField(nodeName: string, model: any) {
       for (const fieldKey in model) {
         const currentField = model[fieldKey]
 
-        if (currentField[UI_NAME] === nodeName && currentField['rdf:type'].includes('Multiple')) {
-          const copiedField = Object.keys(currentField[UI_PARTS])[0]
-          const idLink = FormActions.getSubjectLinkId(currentField[UI_PARTS][copiedField][UI_VALUE])
+        if (currentField[UI.NAME] === nodeName && currentField['rdf:type'].includes('Multiple')) {
+          const copiedField = Object.keys(currentField[UI.PARTS])[0]
+          const idLink = FormActions.getSubjectLinkId(currentField[UI.PARTS][copiedField][UI.VALUE])
           const uniqueName = uuid()
 
           model = {
             ...model,
             [fieldKey]: {
               ...currentField,
-              [UI_PARTS]: {
-                ...currentField[UI_PARTS],
+              [UI.PARTS]: {
+                ...currentField[UI.PARTS],
                 [uniqueName]: {
-                  ...FormActions.cleanFieldNode(currentField[UI_PARTS][copiedField]),
-                  [UI_NAME]: uniqueName,
-                  [UI_VALUE]: idLink
+                  ...FormActions.cleanFieldNode(currentField[UI.PARTS][copiedField]),
+                  [UI.NAME]: uniqueName,
+                  [UI.VALUE]: idLink
                 }
               }
             }
           }
           found = true
           break
-        } else if (currentField[UI_PARTS]) {
+        } else if (currentField[UI.PARTS]) {
           model = {
             ...model,
             [fieldKey]: {
               ...currentField,
-              ...findField(nodeName, currentField[UI_PARTS])
+              ...findField(nodeName, currentField[UI.PARTS])
             }
           }
 
@@ -276,6 +268,6 @@ export class FormActions {
 
     const updatedParts = findField(nodeName, partsObject)
 
-    return { ...this.formModel, [UI_PARTS]: { ...updatedParts } }
+    return { ...this.formModel, [UI.PARTS]: { ...updatedParts } }
   }
 }
