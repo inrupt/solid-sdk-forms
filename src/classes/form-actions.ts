@@ -159,14 +159,17 @@ export class FormActions {
       }
       return model
     }
+    try {
+      const updatedModel = findRecursive(name, newValue, partsObject)
+      /**
+       * Update private formModel store
+       */
+      this.formModel = { ...this.formModel, [UI_PARTS]: { ...updatedModel } }
 
-    const updatedModel = findRecursive(name, newValue, partsObject)
-    /**
-     * Update private formModel store
-     */
-    this.formModel = { ...this.formModel, [UI_PARTS]: { ...updatedModel } }
-
-    return this.formModel
+      return this.formModel
+    } catch (error) {
+      return Error(error)
+    }
   }
 
   /**
