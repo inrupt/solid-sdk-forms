@@ -124,7 +124,6 @@ export class FormActions {
     function findRecursive(name: string, value: string, model: any): any {
       for (const fieldKey in model) {
         if (model[fieldKey][UI.NAME] === name) {
-          console.log('found it', fieldKey)
           model = {
             ...model,
             [fieldKey]: {
