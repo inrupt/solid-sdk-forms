@@ -1,7 +1,7 @@
 import { fetchSchema } from './solid-fetch'
 import * as N3 from 'n3'
 
-export async function getClassifierOptions(from: string, type: string) {
+export async function getClassifierOptions(from: string) {
   const document = from ? await fetchSchema(from) : null
   let options: any = []
 
@@ -11,8 +11,8 @@ export async function getClassifierOptions(from: string, type: string) {
       new N3.Parser().parse(document, (error, triple) => {
         if (triple) {
           const currentType = triple.object.id.includes('#') ? triple.object.id.split('#')[1] : null
-          if (currentType === type) {
-            const value = triple.subject.id.split('#')[1]
+          if (currentType === 'Type' || currentType === 'Class') {
+            const value = triple.subject.id
             options = [...options, value]
           }
         } else {

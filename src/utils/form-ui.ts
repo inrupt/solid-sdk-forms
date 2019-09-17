@@ -170,7 +170,7 @@ async function fillFormModel(
    */
   for await (const fieldValue of fields) {
     const fieldObject = parts[fieldValue]
-    const property = fieldObject['ui:property']
+    let property = fieldObject['ui:property']
     const isMultiple = fieldObject['rdf:type'].includes('Multiple')
     const isGroup = fieldObject['rdf:type'].includes('Group')
     const hasParts = fieldObject['ui:parts']
@@ -183,8 +183,17 @@ async function fillFormModel(
      * parts
      */
     if (property) {
-      const field = await data[podUri][property]
-      parentValue = field && field.value
+      if (fieldObject['rdf:type'].includes('Classifier')) {
+        property = 'https://www.w99/02/22-rdf-syntax-ns#type'
+
+        const result: any = await data[podUri].type
+        if (result) {
+          parentValue = result.value
+        }
+      } else {
+        const field = await data[podUri][property]
+        parentValue = field && field.value
+      }
     }
     /**
      * If field has parts call recursive function to deep into each children fields
