@@ -97,6 +97,7 @@ export class ShexFormModel {
     /**
      * Return the type string
      */
+    // console.log( `<${iri.startsWith(meta.base) ? iri.substr(meta.base.length) : iri}>`, 'link')
     return `<${iri.startsWith(meta.base) ? iri.substr(meta.base.length) : iri}>`
   }
   /**
@@ -223,7 +224,6 @@ export class ShexFormModel {
 
           // add property arc
           graph.addQuad(fieldTerm, namedNode(`${NS_UI}property`), this.jsonLdtoRdf(te.predicate))
-
           let valueExpr =
             typeof te.valueExpr === 'string'
               ? this.derefShapeExpression(te.valueExpr)
@@ -235,6 +235,7 @@ export class ShexFormModel {
             let groupId = blankNode(`${sanitizedPath}_parts_${i}_group`)
             graph.addQuad(fieldTerm, this.iriRdftype, namedNode(`${NS_UI}Multiple`))
             graph.addQuad(fieldTerm, namedNode(`${NS_UI}part`), groupId)
+            // console.log(blankNode, literal, namedNode)
             this.walkShape(
               valueExpr,
               groupId,
@@ -270,6 +271,7 @@ export class ShexFormModel {
           }
         })
       }
+      console.log(parts, 'parts')
       parts.end()
     } catch (error) {
       throw Error(error)

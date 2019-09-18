@@ -65,8 +65,9 @@ export class FormActions {
 
       if (currentField) {
         const predicate = currentField[UI.PROPERTY]
-        let podData
         const isType = currentField['ui:property'].includes('type')
+        let podData
+
         currentField.value = isType ? namedNode(currentField.value) : currentField.value
 
         if (currentField.parent) {
