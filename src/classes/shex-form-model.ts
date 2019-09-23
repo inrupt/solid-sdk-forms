@@ -1,4 +1,4 @@
-import N3, { DataFactory, Store, Writer } from 'n3'
+import { DataFactory, Store, Writer } from 'n3'
 import {
   NS_RDF,
   NS_DC,
@@ -11,6 +11,7 @@ import {
 } from '@constants'
 import { Meta } from '@interfaces'
 import { ListObject } from './list-object'
+import { namedNode } from '@rdfjs/data-model'
 /**
  * Convert ShEx to Form Model
  * We are using n3 library for more info please go to: https://github.com/rdfjs/N3.js/blob/master/README.md
@@ -23,7 +24,7 @@ export class ShexFormModel {
   iriDctitle: string
   iriUitype: string
 
-  constructor(private schema: any) {
+  constructor(private schema: any, private documentUri: string) {
     this.termFactory = DataFactory
     this.graph = new Store()
     this.meta = { prefixes: schema._prefixes, base: window.location.href }
@@ -31,13 +32,16 @@ export class ShexFormModel {
     this.iriDctitle = `${NS_DC}title`
     this.iriUitype = this.iriRdftype
   }
+
+  getSubjectNode(term: string) {
+    return namedNode(`#${term}`)
+  }
   /**
    * Convert SheEx to Form Model
    */
   convert() {
     const {
       schema,
-      graph,
       termFactory: { namedNode, blankNode, literal }
     } = this
     const IRI_this = '#'
@@ -58,9 +62,9 @@ export class ShexFormModel {
 
     const writer = new Writer({
       prefixes: { '': IRI_this, ui: NS_UI, dc: NS_DC },
-      listHeads: graph.sequesterLists()
+      listHeads: this.graph.sequesterLists()
     })
-    writer.addQuads(graph.getQuads())
+    writer.addQuads(this.graph.getQuads())
     let formModel
     writer.end((error, result) => (formModel = result))
 
@@ -97,7 +101,6 @@ export class ShexFormModel {
     /**
      * Return the type string
      */
-    // console.log( `<${iri.startsWith(meta.base) ? iri.substr(meta.base.length) : iri}>`, 'link')
     return `<${iri.startsWith(meta.base) ? iri.substr(meta.base.length) : iri}>`
   }
   /**
@@ -124,6 +127,25 @@ export class ShexFormModel {
   findShapeExpression(goal: string) {
     return this.schema.shapes.find((se: any) => se.id === goal)
   }
+
+  findShapeExpressionOptions(id: string) {
+    let expression = null
+
+    const currentShape = this.findShapeExpression(id)
+
+    if (currentShape && currentShape.values) {
+      const { values } = currentShape
+
+      if (values[0].type && values[0].type.includes('boolean')) {
+        return { type: 'BooleanField', default: '0' }
+      } else {
+        return { type: 'Classifier', values: values.map((value: any) => value.value) }
+      }
+    }
+
+    return expression
+  }
+
   /**
    * Traverse the shape and create the object with turtle format
    * @param shape
@@ -136,7 +158,9 @@ export class ShexFormModel {
   walkShape(shape: any, formTerm: any, path: string, namedNode: any, literal: any, blankNode: any) {
     try {
       const { graph } = this
-      const sanitizedPath = path.replace(/[^A-Za-z_-]/g, '_')
+      const sanitizedPath = path
+        .substr(path.lastIndexOf('/'), path.length)
+        .replace(/[^A-Za-z_-]/g, '_')
       const label = this.findTitle(shape)
       /**
        * insert one quad into n3 store
@@ -173,8 +197,15 @@ export class ShexFormModel {
 
           const fieldTerm =
             'id' in te ? this.jsonLdtoRdf(te.id) : blankNode(`${sanitizedPath}_parts_${i}_field`)
-          const fieldType =
-            te.valueExpr && te.valueExpr.values ? 'Classifier' : 'SingleLineTextField'
+
+          const optionsType = this.findShapeExpressionOptions(te.valueExpr)
+          let fieldType = te.valueExpr && te.valueExpr.values ? 'Classifier' : 'SingleLineTextField'
+
+          if (optionsType) {
+            const { type } = optionsType
+            fieldType = type
+          }
+
           let needFieldType = namedNode(NS_UI + fieldType)
 
           // copy annotations
@@ -210,20 +241,32 @@ export class ShexFormModel {
                 /**
                  * insert one quad into n3 store
                  */
-                graph.addQuad(fieldTerm, namedNode(`${NS_UI}label`), this.jsonLdtoRdf(a.object))
+                graph.addQuad(
+                  this.getSubjectNode(fieldTerm.id),
+                  namedNode(`${NS_UI}label`),
+                  this.jsonLdtoRdf(a.object)
+                )
               } else {
                 /**
                  * insert one quad into n3 store
                  */
-                graph.addQuad(fieldTerm, this.jsonLdtoRdf(a.predicate), this.jsonLdtoRdf(a.object))
+                graph.addQuad(
+                  this.getSubjectNode(fieldTerm.id),
+                  this.jsonLdtoRdf(a.predicate),
+                  this.jsonLdtoRdf(a.object)
+                )
               }
             })
 
           // add the parts list entry for new field
-          parts.add(fieldTerm, `${sanitizedPath}_parts_${i}`)
+          parts.add(this.getSubjectNode(fieldTerm.id), `${sanitizedPath}_parts_${i}`)
 
           // add property arc
-          graph.addQuad(fieldTerm, namedNode(`${NS_UI}property`), this.jsonLdtoRdf(te.predicate))
+          graph.addQuad(
+            this.getSubjectNode(fieldTerm.id),
+            namedNode(`${NS_UI}property`),
+            this.jsonLdtoRdf(te.predicate)
+          )
           let valueExpr =
             typeof te.valueExpr === 'string'
               ? this.derefShapeExpression(te.valueExpr)
@@ -233,9 +276,13 @@ export class ShexFormModel {
           if (valueExpr.type === 'Shape') {
             needFieldType = null
             let groupId = blankNode(`${sanitizedPath}_parts_${i}_group`)
-            graph.addQuad(fieldTerm, this.iriRdftype, namedNode(`${NS_UI}Multiple`))
-            graph.addQuad(fieldTerm, namedNode(`${NS_UI}part`), groupId)
-            // console.log(blankNode, literal, namedNode)
+            graph.addQuad(
+              this.getSubjectNode(fieldTerm.id),
+              this.iriRdftype,
+              namedNode(`${NS_UI}Multiple`)
+            )
+            graph.addQuad(this.getSubjectNode(fieldTerm.id), namedNode(`${NS_UI}parts`), groupId)
+
             this.walkShape(
               valueExpr,
               groupId,
@@ -267,11 +314,35 @@ export class ShexFormModel {
 
           // if there's no type, assume ui:SingleLineTextField
           if (needFieldType) {
-            graph.addQuad(fieldTerm, namedNode(this.iriRdftype), needFieldType)
+            graph.addQuad(
+              this.getSubjectNode(fieldTerm.id),
+              namedNode(this.iriRdftype),
+              needFieldType
+            )
+          }
+
+          /**
+           * Add Boolean and Classifier options
+           */
+          if (optionsType) {
+            if (optionsType.type === 'BooleanField') {
+              graph.addQuad(
+                this.getSubjectNode(fieldTerm.id),
+                namedNode(`${NS_UI}default`),
+                this.jsonLdtoRdf({ value: '0' })
+              )
+            } else if (optionsType.type === 'Classifier') {
+              if (optionsType.values) {
+                graph.addQuad(
+                  this.getSubjectNode(fieldTerm.id),
+                  namedNode(`${NS_UI}values`),
+                  this.jsonLdtoRdf({ value: optionsType.values })
+                )
+              }
+            }
           }
         })
       }
-      console.log(parts, 'parts')
       parts.end()
     } catch (error) {
       throw Error(error)

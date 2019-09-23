@@ -278,7 +278,8 @@ async function fillFormModel(
  * @param partsPath
  */
 export async function convertFormModel(documentUri: any, documentPod: any) {
-  const existDocumentPod = await existDocument(documentPod)
+  const existDocumentPod =
+    documentPod || documentPod !== '' ? await existDocument(documentPod) : null
   const model = await turtleToFormUi(data[documentUri])
   let modelUi = {
     '@context': {
@@ -290,7 +291,6 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
   if (!existDocumentPod) {
     return modelUi
   }
-
   const modelWidthData = fillFormModel(modelUi, documentPod)
 
   return modelWidthData
