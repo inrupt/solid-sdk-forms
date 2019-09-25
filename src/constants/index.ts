@@ -1,4 +1,4 @@
-export const NS_RDF: string = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#"'
+export const NS_RDF: string = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
 export const NS_DC: string = 'http://purl.org/dc/elements/1.1/'
 export const NS_UI: string = 'http://www.w3.org/ns/ui#'
 export const NS_LAYOUT: string = 'http://janeirodigital.com/layout#'

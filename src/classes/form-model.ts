@@ -7,7 +7,7 @@ import { SHEX_SCHEMA } from '@constants'
 import { ShexFormModel } from './shex-form-model'
 
 export class FormModel {
-  constructor(private url: string) {}
+  constructor(private url: string, private documentUri: string) {}
   /**
    * @param {String} url The URL of the shape or schema
    * @return {String} document extension
@@ -135,7 +135,7 @@ export class FormModel {
   parseShEx = async (): Promise<any> => {
     try {
       const schema = await this.parseSchema(this.url)
-      const formModel = new ShexFormModel(schema)
+      const formModel = new ShexFormModel(schema, this.documentUri)
 
       return formModel.convert()
     } catch (error) {

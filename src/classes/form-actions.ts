@@ -65,10 +65,16 @@ export class FormActions {
 
       if (currentField) {
         const predicate = currentField[UI.PROPERTY]
+        const isType = currentField['ui:property'].includes('type')
         let podData
 
+        currentField.value = isType ? namedNode(currentField.value) : currentField.value
+
         if (currentField.parent) {
-          podData = data[currentField.parent[UI.VALUE]][predicate]
+          podData = isType
+            ? data[currentField.parent[UI.VALUE]].type
+            : data[currentField.parent[UI.VALUE]][predicate]
+
           if (currentField[UI.OLDVALUE] !== '') {
             await podData.set(currentField.value)
           } else {
@@ -77,7 +83,7 @@ export class FormActions {
             await podData.add(currentField.value)
           }
         } else {
-          podData = data[currentField[UI.BASE]][predicate]
+          podData = isType ? data[currentField[UI.BASE]] : data[currentField[UI.BASE]][predicate]
 
           if (currentField[UI.OLDVALUE]) {
             await podData.set(currentField.value)
@@ -85,14 +91,17 @@ export class FormActions {
             await podData.add(currentField.value)
           }
         }
-
         /**
          * Update ui:value and  ui:oldValue on formModel and reset formObject
          */
-        this.updateFieldModel(currentField[UI.NAME], currentField.value)
+        this.updateFieldModel(
+          currentField[UI.NAME],
+          isType ? currentField.value.value : currentField.value
+        )
       }
     }
     this.resetFormObject()
+    return this.formModel
   }
   /**
    * Delete field from pod
