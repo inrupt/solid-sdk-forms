@@ -333,11 +333,16 @@ export class ShexFormModel {
               )
             } else if (optionsType.type === 'Classifier') {
               if (optionsType.values) {
-                graph.addQuad(
-                  this.getSubjectNode(fieldTerm.id),
+                let classifierParts = new ListObject(
+                  `#${fieldTerm.id}`,
                   namedNode(`${NS_UI}values`),
-                  this.jsonLdtoRdf({ value: optionsType.values })
+                  graph,
+                  this.termFactory
                 )
+                for (const value of optionsType.values) {
+                  classifierParts.add(`"${value}"`)
+                }
+                classifierParts.end()
               }
             }
           }
