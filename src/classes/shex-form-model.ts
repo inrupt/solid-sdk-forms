@@ -58,7 +58,7 @@ export class ShexFormModel {
     /**
      * Traverse the shape to create turtle object
      */
-    this.walkShape(start, rootFormTerm, this.localName(start.id), namedNode, literal, blankNode)
+    this.walkShape(start, rootFormTerm, this.localName(start.id))
 
     const writer = new Writer({
       prefixes: { '': IRI_this, ui: NS_UI, dc: NS_DC },
@@ -155,17 +155,19 @@ export class ShexFormModel {
    * @param literal
    * @param blankNode
    */
-  walkShape(shape: any, formTerm: any, path: string, namedNode: any, literal: any, blankNode: any) {
+  walkShape(shape: any, formTerm: any, path: string, isGroup: boolean = false) {
     try {
       const { graph } = this
       const sanitizedPath = path
         .substr(path.lastIndexOf('/'), path.length)
         .replace(/[^A-Za-z_-]/g, '_')
       const label = this.findTitle(shape)
+      const { literal, namedNode, blankNode } = this.termFactory
+      const type = isGroup ? 'Group' : 'Form'
       /**
        * insert one quad into n3 store
        */
-      graph.addQuad(formTerm, namedNode(`${NS_RDF}type`), namedNode(`${NS_UI}Form`))
+      graph.addQuad(formTerm, namedNode(`${NS_RDF}type`), namedNode(`${NS_UI}${type}`))
 
       if (label) {
         /**
@@ -294,14 +296,7 @@ export class ShexFormModel {
             groupParts.add(groupId)
             groupParts.end()
 
-            this.walkShape(
-              valueExpr,
-              groupId,
-              `${path}/@${this.localName(te.valueExpr)}`,
-              namedNode,
-              literal,
-              blankNode
-            )
+            this.walkShape(valueExpr, groupId, `${path}/@${this.localName(te.valueExpr)}`, true)
           } else if (valueExpr.type === NODE_CONSTRAINT) {
             let nc = valueExpr
             if ('maxlength' in nc) {
