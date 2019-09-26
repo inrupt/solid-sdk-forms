@@ -186,13 +186,13 @@ async function fillFormModel(
       if (fieldObject['rdf:type'].includes('Classifier')) {
         property = 'https://www.w99/02/22-rdf-syntax-ns#type'
 
-        const result: any = await data[podUri].type
+        const result: any = podUri && (await data[podUri].type)
         if (result) {
-          parentValue = result.value
+          parentValue = result.value || ''
         }
       } else {
-        const field = await data[podUri][property]
-        parentValue = field && field.value
+        const field = podUri && (await data[podUri][property])
+        parentValue = field.value || ''
       }
     }
     /**
@@ -202,7 +202,7 @@ async function fillFormModel(
       /**
        * If field is multiple will remove children subject and add custom node id
        */
-      if (isMultiple) {
+      if (isMultiple && podUri) {
         for await (let fieldData of data[podUri][property]) {
           const { value } = fieldData
           const uniqueName = uuid()
@@ -288,9 +288,9 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     },
     'ui:parts': { ...model }
   }
-  if (!existDocumentPod) {
+  /* if (!existDocumentPod) {
     return modelUi
-  }
+  } */
   const modelWidthData = fillFormModel(modelUi, documentPod)
 
   return modelWidthData

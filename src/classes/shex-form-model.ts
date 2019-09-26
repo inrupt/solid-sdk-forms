@@ -196,7 +196,7 @@ export class ShexFormModel {
           }
 
           const fieldTerm =
-            'id' in te ? this.jsonLdtoRdf(te.id) : blankNode(`${sanitizedPath}_parts_${i}_field`)
+            'id' in te ? this.jsonLdtoRdf(te.id) : blankNode(`${sanitizedPath}_parts_${i}`)
 
           const optionsType = this.findShapeExpressionOptions(te.valueExpr)
           let fieldType = te.valueExpr && te.valueExpr.values ? 'Classifier' : 'SingleLineTextField'
@@ -259,7 +259,7 @@ export class ShexFormModel {
             })
 
           // add the parts list entry for new field
-          parts.add(this.getSubjectNode(fieldTerm.id), `${sanitizedPath}_parts_${i}`)
+          parts.add(`#_:${sanitizedPath}_parts_${i}`)
 
           // add property arc
           graph.addQuad(
@@ -275,13 +275,24 @@ export class ShexFormModel {
           // add what we can guess from the value expression
           if (valueExpr.type === 'Shape') {
             needFieldType = null
-            let groupId = blankNode(`${sanitizedPath}_parts_${i}_group`)
+            let groupId = namedNode(`#${sanitizedPath}_parts_${i}_group`)
             graph.addQuad(
               this.getSubjectNode(fieldTerm.id),
               this.iriRdftype,
               namedNode(`${NS_UI}Multiple`)
             )
-            graph.addQuad(this.getSubjectNode(fieldTerm.id), namedNode(`${NS_UI}parts`), groupId)
+            // graph.addQuad(this.getSubjectNode(fieldTerm.id), namedNode(`${NS_UI}parts`), groupId)
+            /**
+             * Add parts of group into list
+             */
+            const groupParts = new ListObject(
+              `#${fieldTerm.id}`,
+              namedNode(`${NS_UI}parts`),
+              graph,
+              this.termFactory
+            )
+            groupParts.add(groupId)
+            groupParts.end()
 
             this.walkShape(
               valueExpr,
