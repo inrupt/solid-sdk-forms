@@ -143,6 +143,21 @@ async function existDocument(document: string) {
 
   return result.status !== 404
 }
+
+async function fillPartsFields(childs: any, options: any) {
+  const uniqueName = uuid()
+  const { fieldObject, value, property, podUri } = options
+  return {
+    'ui:parts': {
+      ...childs['ui:parts'],
+      [uniqueName]: {
+        'ui:name': uniqueName,
+        'ui:value': value,
+        ...(await fillFormModel(fieldObject, value, property, podUri))
+      }
+    }
+  }
+}
 /**
  * Fill Form Model with user data pod
  * @param modelUi
@@ -202,20 +217,16 @@ async function fillFormModel(
       /**
        * If field is multiple will remove children subject and add custom node id
        */
-      if (isMultiple && podUri) {
-        for await (let fieldData of data[podUri][property]) {
-          const { value } = fieldData
-          const uniqueName = uuid()
-
-          childs = {
-            'ui:parts': {
-              ...childs['ui:parts'],
-              [uniqueName]: {
-                'ui:name': uniqueName,
-                'ui:value': value,
-                ...(await fillFormModel(fieldObject, value, property, podUri))
-              }
-            }
+      if (isMultiple) {
+        /**
+         * Add unique id for parts fields when podUri is empty or not exist.
+         */
+        if (!podUri || podUri === '') {
+          childs = await fillPartsFields(childs, { fieldObject, property, podUri, value: '' })
+        } else {
+          for await (let fieldData of data[podUri][property]) {
+            const { value } = fieldData
+            childs = await fillPartsFields(childs, { fieldObject, property, podUri, value })
           }
         }
       }
