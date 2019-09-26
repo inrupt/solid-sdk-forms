@@ -288,9 +288,7 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     },
     'ui:parts': { ...model }
   }
-  /* if (!existDocumentPod) {
-    return modelUi
-  } */
+
   const modelWidthData = fillFormModel(modelUi, documentPod)
 
   return modelWidthData

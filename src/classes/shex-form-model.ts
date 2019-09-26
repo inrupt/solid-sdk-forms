@@ -283,7 +283,6 @@ export class ShexFormModel {
               this.iriRdftype,
               namedNode(`${NS_UI}Multiple`)
             )
-            // graph.addQuad(this.getSubjectNode(fieldTerm.id), namedNode(`${NS_UI}parts`), groupId)
             /**
              * Add parts of group into list
              */
