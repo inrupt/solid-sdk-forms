@@ -12,7 +12,7 @@ export class FormActions {
    * Create random subject link for a node
    */
   static getSubjectLinkId = (currentLink: string) => {
-    if (currentLink.includes('#')) {
+    if (currentLink && currentLink.includes('#')) {
       const id = Date.now()
       return `${currentLink.split('#')[0]}#${id}`
     }
@@ -107,13 +107,15 @@ export class FormActions {
    * Delete field from pod
    */
   static deleteFieldPod = async (field: any) => {
-    if (field[UI.PARENT_PROPERTY]) {
-      /**
-       * Delete field from  link data reference
-       */
-      await data[field[UI.BASE]][field[UI.PARENT_PROPERTY]].delete(namedNode(field[UI.VALUE]))
-    } else {
-      await data[field[UI.BASE]][field[UI.PROPERTY]].delete(field[UI.VALUE])
+    if (field[UI.BASE]) {
+      if (field[UI.PARENT_PROPERTY]) {
+        /**
+         * Delete field from  link data reference
+         */
+        await data[field[UI.BASE]][field[UI.PARENT_PROPERTY]].delete(namedNode(field[UI.VALUE]))
+      } else {
+        await data[field[UI.BASE]][field[UI.PROPERTY]].delete(field[UI.VALUE])
+      }
     }
   }
   /**
@@ -183,7 +185,6 @@ export class FormActions {
     async function deleteRecursive(field: string, model: any) {
       try {
         const modelKeys = Object.keys(model)
-
         for await (const fieldKey of modelKeys) {
           if (model[fieldKey][UI.NAME] === field) {
             await FormActions.deleteFieldPod(model[fieldKey])
