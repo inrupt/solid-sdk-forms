@@ -143,6 +143,31 @@ async function existDocument(document: string) {
 
   return result.status !== 404
 }
+
+async function fillPartsFields(childs: any, options: any) {
+  const uniqueName = uuid()
+  const { fieldObject, value, property, podUri } = options
+  return {
+    'ui:parts': {
+      ...childs['ui:parts'],
+      [uniqueName]: {
+        'ui:name': uniqueName,
+        'ui:value': value,
+        ...(await fillFormModel(fieldObject, value, property, podUri))
+      }
+    }
+  }
+}
+
+function getSubjectLinkId(currentLink: string) {
+  const id = Date.now()
+
+  if (currentLink && currentLink.includes('#')) {
+    return `${currentLink.split('#')[0]}#${id}`
+  }
+
+  return `${currentLink}#${id}`
+}
 /**
  * Fill Form Model with user data pod
  * @param modelUi
@@ -186,13 +211,13 @@ async function fillFormModel(
       if (fieldObject['rdf:type'].includes('Classifier')) {
         property = 'https://www.w99/02/22-rdf-syntax-ns#type'
 
-        const result: any = await data[podUri].type
+        const result: any = podUri && (await data[podUri].type)
         if (result) {
-          parentValue = result.value
+          parentValue = result.value || ''
         }
       } else {
-        const field = await data[podUri][property]
-        parentValue = field && field.value
+        const field = podUri && (await data[podUri][property])
+        parentValue = (field && field.value) || ''
       }
     }
     /**
@@ -203,20 +228,20 @@ async function fillFormModel(
        * If field is multiple will remove children subject and add custom node id
        */
       if (isMultiple) {
+        /**
+         * Add unique id for parts fields when podUri is empty or not exist.
+         */
+        let existField = false
+
         for await (let fieldData of data[podUri][property]) {
           const { value } = fieldData
-          const uniqueName = uuid()
+          existField = true
+          childs = await fillPartsFields(childs, { fieldObject, property, podUri, value })
+        }
 
-          childs = {
-            'ui:parts': {
-              ...childs['ui:parts'],
-              [uniqueName]: {
-                'ui:name': uniqueName,
-                'ui:value': value,
-                ...(await fillFormModel(fieldObject, value, property, podUri))
-              }
-            }
-          }
+        if (!existField) {
+          const idLink = getSubjectLinkId(podUri)
+          childs = await fillPartsFields(childs, { fieldObject, property, podUri, value: idLink })
         }
       }
 
@@ -225,8 +250,8 @@ async function fillFormModel(
           parentProperty && parentUri
             ? { 'ui:parentProperty': parentProperty, 'ui:base': parentUri }
             : {}
+
         newModelUi = {
-          // ...newModelUi,
           ...parentPro,
           'ui:reference': fieldValue,
           ...(await fillFormModel(fieldObject, podUri))
@@ -288,9 +313,7 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     },
     'ui:parts': { ...model }
   }
-  if (!existDocumentPod) {
-    return modelUi
-  }
+
   const modelWidthData = fillFormModel(modelUi, documentPod)
 
   return modelWidthData
