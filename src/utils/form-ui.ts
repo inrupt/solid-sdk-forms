@@ -158,6 +158,16 @@ async function fillPartsFields(childs: any, options: any) {
     }
   }
 }
+
+function getSubjectLinkId(currentLink: string) {
+  const id = Date.now()
+
+  if (currentLink && currentLink.includes('#')) {
+    return `${currentLink.split('#')[0]}#${id}`
+  }
+
+  return `${currentLink}#${id}`
+}
 /**
  * Fill Form Model with user data pod
  * @param modelUi
@@ -207,7 +217,7 @@ async function fillFormModel(
         }
       } else {
         const field = podUri && (await data[podUri][property])
-        parentValue = field.value || ''
+        parentValue = (field && field.value) || ''
       }
     }
     /**
@@ -221,13 +231,17 @@ async function fillFormModel(
         /**
          * Add unique id for parts fields when podUri is empty or not exist.
          */
-        if (!podUri || podUri === '') {
-          childs = await fillPartsFields(childs, { fieldObject, property, podUri, value: '' })
-        } else {
-          for await (let fieldData of data[podUri][property]) {
-            const { value } = fieldData
-            childs = await fillPartsFields(childs, { fieldObject, property, podUri, value })
-          }
+        let existField = false
+
+        for await (let fieldData of data[podUri][property]) {
+          const { value } = fieldData
+          existField = true
+          childs = await fillPartsFields(childs, { fieldObject, property, podUri, value })
+        }
+
+        if (!existField) {
+          const idLink = getSubjectLinkId(podUri)
+          childs = await fillPartsFields(childs, { fieldObject, property, podUri, value: idLink })
         }
       }
 
@@ -236,8 +250,8 @@ async function fillFormModel(
           parentProperty && parentUri
             ? { 'ui:parentProperty': parentProperty, 'ui:base': parentUri }
             : {}
+
         newModelUi = {
-          // ...newModelUi,
           ...parentPro,
           'ui:reference': fieldValue,
           ...(await fillFormModel(fieldObject, podUri))

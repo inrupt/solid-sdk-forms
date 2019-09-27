@@ -75,10 +75,11 @@ export class FormActions {
             ? data[currentField.parent[UI.VALUE]].type
             : data[currentField.parent[UI.VALUE]][predicate]
 
-          if (currentField[UI.OLDVALUE] !== '') {
+          if (currentField[UI.OLDVALUE] && currentField[UI.OLDVALUE] !== '') {
             await podData.set(currentField.value)
           } else {
             const { parent } = currentField
+
             await data[parent[UI.BASE]][parent[UI.PARENT_PROPERTY]].add(namedNode(parent[UI.VALUE]))
             await podData.add(currentField.value)
           }
