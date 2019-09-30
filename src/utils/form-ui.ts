@@ -66,7 +66,12 @@ function getPredicateName(predicate: string): any {
 }
 
 async function getPropertyValue(field: string, property: string) {
-  let propertyProxy: any = await data[field][property]
+  let propertyProxy: any
+
+  if (property.includes('ui#values')) {
+    return loopList(data[field][property])
+  }
+  propertyProxy = await data[field][property]
 
   return propertyProxy && propertyProxy.value
 }
@@ -194,7 +199,7 @@ async function fillFormModel(
    * match with pod property data
    */
   for await (const fieldValue of fields) {
-    const fieldObject = parts[fieldValue]
+    let fieldObject = parts[fieldValue]
     let property = fieldObject['ui:property']
     const isMultiple = fieldObject['rdf:type'].includes('Multiple')
     const isGroup = fieldObject['rdf:type'].includes('Group')
@@ -210,7 +215,6 @@ async function fillFormModel(
     if (property) {
       if (fieldObject['rdf:type'].includes('Classifier')) {
         property = 'https://www.w99/02/22-rdf-syntax-ns#type'
-
         const result: any = podUri && (await data[podUri].type)
         if (result) {
           parentValue = result.value || ''
@@ -273,6 +277,11 @@ async function fillFormModel(
           }
         : { 'ui:name': uuid(), 'ui:base': podUri }
 
+    if (fieldObject['ui:values']) {
+      fieldObject = {
+        ...fieldObject
+      }
+    }
     /**
      * Updated field if value is not a group
      */
