@@ -271,7 +271,7 @@ async function fillFormModel(
             'ui:name': uuid(),
             'ui:base': podUri
           }
-        : { 'ui:name': uuid() }
+        : { 'ui:name': uuid(), 'ui:base': podUri }
 
     /**
      * Updated field if value is not a group
