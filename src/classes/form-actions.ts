@@ -65,10 +65,12 @@ export class FormActions {
 
       if (currentField) {
         const predicate = currentField[UI.PROPERTY]
+        const { value } = currentField
         const isType = currentField['ui:property'].includes('type')
         let podData
 
         currentField.value = isType ? namedNode(currentField.value) : currentField.value
+        const updatedValue = typeof value === 'boolean' ? value.toString() : value
 
         if (currentField.parent) {
           podData = isType
@@ -76,20 +78,20 @@ export class FormActions {
             : data[currentField.parent[UI.VALUE]][predicate]
 
           if (currentField[UI.OLDVALUE] && currentField[UI.OLDVALUE] !== '') {
-            await podData.set(currentField.value)
+            await podData.set(updatedValue)
           } else {
             const { parent } = currentField
 
             await data[parent[UI.BASE]][parent[UI.PARENT_PROPERTY]].add(namedNode(parent[UI.VALUE]))
-            await podData.add(currentField.value)
+            await podData.add(updatedValue)
           }
         } else {
           podData = isType ? data[currentField[UI.BASE]] : data[currentField[UI.BASE]][predicate]
 
           if (currentField[UI.OLDVALUE]) {
-            await podData.set(currentField.value)
+            await podData.set(updatedValue)
           } else {
-            await podData.add(currentField.value)
+            await podData.add(updatedValue)
           }
         }
         /**
