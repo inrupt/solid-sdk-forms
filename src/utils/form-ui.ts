@@ -149,7 +149,7 @@ async function existDocument(document: string) {
   return result.status !== 404
 }
 
-async function PartsFields(childs: any, options: any) {
+async function partsFields(childs: any, options: any) {
   const uniqueName = uuid()
   const { fieldObject, value, property, podUri } = options
   return {
@@ -250,12 +250,12 @@ async function FormModel(
         for await (let fieldData of data[podUri][property]) {
           const { value } = fieldData
           existField = true
-          childs = await PartsFields(childs, { fieldObject, property, podUri, value })
+          childs = await partsFields(childs, { fieldObject, property, podUri, value })
         }
 
         if (!existField) {
           const idLink = getSubjectLinkId(podUri)
-          childs = await PartsFields(childs, { fieldObject, property, podUri, value: idLink })
+          childs = await partsFields(childs, { fieldObject, property, podUri, value: idLink })
         }
       }
 
