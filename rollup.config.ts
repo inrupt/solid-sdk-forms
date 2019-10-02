@@ -19,7 +19,7 @@ export default {
   external: ['@solid/query-ldflex', '@shexjs/parser', '@shexjs/core'],
   output: [
     { file: pkg.main, name: camelCase(libraryName), format: 'umd', sourcemap: false },
-    { file: pkg.module, format: 'es', sourcemap: true },
+    { file: pkg.module, format: 'es', sourcemap: false },
   ],
   context: 'null',
   moduleContext: 'null',
