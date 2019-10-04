@@ -143,7 +143,7 @@
     "jsonld-request": "^0.2.0",
     "ldflex": "^2.5.1",
     "module-alias": "^2.2.1",
-    "n3": "^1.1.2",
+    "n3": "^2.0.0-test",
     "rollup-plugin-alias": "^2.0.0",
     "rollup-plugin-inject": "^3.0.1",
     "solid-auth-client": "^2.3.1",
