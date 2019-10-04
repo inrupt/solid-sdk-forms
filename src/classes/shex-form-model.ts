@@ -58,7 +58,7 @@ export class ShexFormModel {
     /**
      * Traverse the shape to create turtle object
      */
-    this.walkShape(start, rootFormTerm, this.localName(start.id), namedNode, literal, blankNode)
+    this.walkShape(start, rootFormTerm, this.localName(start.id))
 
     const writer = new Writer({
       prefixes: { '': IRI_this, ui: NS_UI, dc: NS_DC },
@@ -155,17 +155,19 @@ export class ShexFormModel {
    * @param literal
    * @param blankNode
    */
-  walkShape(shape: any, formTerm: any, path: string, namedNode: any, literal: any, blankNode: any) {
+  walkShape(shape: any, formTerm: any, path: string, isGroup: boolean = false) {
     try {
       const { graph } = this
       const sanitizedPath = path
         .substr(path.lastIndexOf('/'), path.length)
         .replace(/[^A-Za-z_-]/g, '_')
       const label = this.findTitle(shape)
+      const { literal, namedNode, blankNode } = this.termFactory
+      const type = isGroup ? 'Group' : 'Form'
       /**
        * insert one quad into n3 store
        */
-      graph.addQuad(formTerm, namedNode(`${NS_RDF}type`), namedNode(`${NS_UI}Form`))
+      graph.addQuad(formTerm, namedNode(`${NS_RDF}type`), namedNode(`${NS_UI}${type}`))
 
       if (label) {
         /**
@@ -196,7 +198,7 @@ export class ShexFormModel {
           }
 
           const fieldTerm =
-            'id' in te ? this.jsonLdtoRdf(te.id) : blankNode(`${sanitizedPath}_parts_${i}_field`)
+            'id' in te ? this.jsonLdtoRdf(te.id) : blankNode(`${sanitizedPath}_parts_${i}`)
 
           const optionsType = this.findShapeExpressionOptions(te.valueExpr)
           let fieldType = te.valueExpr && te.valueExpr.values ? 'Classifier' : 'SingleLineTextField'
@@ -259,7 +261,7 @@ export class ShexFormModel {
             })
 
           // add the parts list entry for new field
-          parts.add(this.getSubjectNode(fieldTerm.id), `${sanitizedPath}_parts_${i}`)
+          parts.add(`#_:${sanitizedPath}_parts_${i}`)
 
           // add property arc
           graph.addQuad(
@@ -275,22 +277,25 @@ export class ShexFormModel {
           // add what we can guess from the value expression
           if (valueExpr.type === 'Shape') {
             needFieldType = null
-            let groupId = blankNode(`${sanitizedPath}_parts_${i}_group`)
+            let groupId = namedNode(`#${sanitizedPath}_parts_${i}_group`)
             graph.addQuad(
               this.getSubjectNode(fieldTerm.id),
               this.iriRdftype,
               namedNode(`${NS_UI}Multiple`)
             )
-            graph.addQuad(this.getSubjectNode(fieldTerm.id), namedNode(`${NS_UI}parts`), groupId)
-
-            this.walkShape(
-              valueExpr,
-              groupId,
-              `${path}/@${this.localName(te.valueExpr)}`,
-              namedNode,
-              literal,
-              blankNode
+            /**
+             * Add parts of group into list
+             */
+            const groupParts = new ListObject(
+              `#${fieldTerm.id}`,
+              namedNode(`${NS_UI}parts`),
+              graph,
+              this.termFactory
             )
+            groupParts.add(groupId)
+            groupParts.end()
+
+            this.walkShape(valueExpr, groupId, `${path}/@${this.localName(te.valueExpr)}`, true)
           } else if (valueExpr.type === NODE_CONSTRAINT) {
             let nc = valueExpr
             if ('maxlength' in nc) {
