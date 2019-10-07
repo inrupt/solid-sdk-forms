@@ -242,9 +242,9 @@ export class FormActions {
         const currentField = model[fieldKey]
 
         if (currentField[UI.NAME] === nodeName && currentField['rdf:type'].includes('Multiple')) {
-          const copiedField = Object.keys(currentField['ui:partsClone'])[0]
+          const copiedField = Object.keys(currentField[UI.CLONE_PARTS])[0]
           const idLink = FormActions.getSubjectLinkId(
-            currentField['ui:partsClone'][copiedField][UI.VALUE]
+            currentField[UI.CLONE_PARTS][copiedField][UI.VALUE]
           )
           const uniqueName = uuid()
 
@@ -255,7 +255,7 @@ export class FormActions {
               [UI.PARTS]: {
                 ...currentField[UI.PARTS],
                 [uniqueName]: {
-                  ...FormActions.cleanFieldNode(currentField['ui:partsClone'][copiedField]),
+                  ...FormActions.cleanFieldNode(currentField[UI.CLONE_PARTS][copiedField]),
                   [UI.NAME]: uniqueName,
                   [UI.VALUE]: idLink
                 }
