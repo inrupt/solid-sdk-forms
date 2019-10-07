@@ -2,6 +2,7 @@ import data from '@solid/query-ldflex'
 import auth from 'solid-auth-client'
 import uuid from 'uuid'
 import { CONTEXT } from '@constants'
+import { UI } from '@constants'
 
 /**
  * Find prefix context to add into object property
@@ -121,12 +122,12 @@ async function turtleToFormUi(document: any) {
     }
 
     if (
-      !fields[subjectPrefix]['ui:label'] &&
-      !fields[subjectPrefix]['ui:parts'] &&
-      fields[subjectPrefix]['ui:property']
+      !fields[subjectPrefix][UI.LABEL] &&
+      !fields[subjectPrefix][UI.PARTS] &&
+      fields[subjectPrefix][UI.PROPERTY]
     ) {
-      const label = findLabel(fields[subjectPrefix]['ui:property'])
-      fields = { ...fields, [subjectPrefix]: { ...fields[subjectPrefix], 'ui:label': label } }
+      const label = findLabel(fields[subjectPrefix][UI.PROPERTY])
+      fields = { ...fields, [subjectPrefix]: { ...fields[subjectPrefix], [UI.LABEL]: label } }
     }
   }
   return fields
@@ -153,11 +154,11 @@ async function partsFields(childs: any, options: any) {
   const uniqueName = uuid()
   const { fieldObject, value, property, podUri } = options
   return {
-    'ui:parts': {
-      ...childs['ui:parts'],
+    [UI.PARTS]: {
+      ...childs[UI.PARTS],
       [uniqueName]: {
-        'ui:name': uniqueName,
-        'ui:value': value,
+        [UI.NAME]: uniqueName,
+        [UI.VALUE]: value,
         ...(await formModel(fieldObject, value, property, podUri))
       }
     }
@@ -177,7 +178,7 @@ function getSubjectLinkId(currentLink: string) {
 function getClonePart(childs: any) {
   return {
     ...childs,
-    'ui:partsClone': childs['ui:parts']
+    [UI.CLONE_PARTS]: childs[UI.PARTS]
   }
 }
 
@@ -195,11 +196,11 @@ async function formModel(
   /**
    * Get fields parts from Form Model
    */
-  const parts = modelUi['ui:parts']
+  const parts = modelUi[UI.PARTS]
   /**
    * Get fields key into Form Model to loop over each field
    */
-  const fields: any = Object.keys(modelUi['ui:parts'])
+  const fields: any = Object.keys(modelUi[UI.PARTS])
   let newModelUi = modelUi
 
   /**
@@ -208,10 +209,10 @@ async function formModel(
    */
   for await (const fieldValue of fields) {
     let fieldObject = parts[fieldValue]
-    let property = fieldObject['ui:property']
+    let property = fieldObject[UI.PROPERTY]
     const isMultiple = fieldObject['rdf:type'].includes('Multiple')
     const isGroup = fieldObject['rdf:type'].includes('Group')
-    const hasParts = fieldObject['ui:parts']
+    const hasParts = fieldObject[UI.PARTS]
     let parentValue = ''
     let childs: any = {}
     let updatedField: any = []
@@ -224,7 +225,7 @@ async function formModel(
       if (fieldObject['rdf:type'].includes('Classifier')) {
         let result: any
 
-        if (fieldObject['ui:values']) {
+        if (fieldObject[UI.VALUES]) {
           result = podUri && (await data[podUri][property])
 
           if (result) {
@@ -272,12 +273,12 @@ async function formModel(
       if (isGroup) {
         const parentPro =
           parentProperty && parentUri
-            ? { 'ui:parentProperty': parentProperty, 'ui:base': parentUri }
+            ? { [UI.PARENT_PROPERTY]: parentProperty, [UI.BASE]: parentUri }
             : {}
 
         newModelUi = {
           ...parentPro,
-          'ui:reference': fieldValue,
+          [UI.REFERENCE]: fieldValue,
           ...(await formModel(fieldObject, podUri))
         }
       }
@@ -290,14 +291,14 @@ async function formModel(
     const objectValue =
       parentValue && !isMultiple
         ? {
-            'ui:value': parentValue,
-            'ui:oldValue': parentValue,
-            'ui:name': uuid(),
-            'ui:base': podUri
+            [UI.VALUE]: parentValue,
+            [UI.OLDVALUE]: parentValue,
+            [UI.NAME]: uuid(),
+            [UI.BASE]: podUri
           }
-        : { 'ui:name': uuid(), 'ui:base': podUri }
+        : { [UI.NAME]: uuid(), [UI.BASE]: podUri }
 
-    if (fieldObject['ui:values']) {
+    if (fieldObject[UI.VALUES]) {
       fieldObject = {
         ...fieldObject
       }
@@ -317,8 +318,8 @@ async function formModel(
 
     newModelUi = {
       ...newModelUi,
-      'ui:parts': {
-        ...newModelUi['ui:parts'],
+      [UI.PARTS]: {
+        ...newModelUi[UI.PARTS],
         ...updatedField
       }
     }
@@ -339,7 +340,7 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
       subject: subjectPrefix(documentUri),
       document: documentPod
     },
-    'ui:parts': { ...model }
+    [UI.PARTS]: { ...model }
   }
 
   const modelWidthData = formModel(modelUi, documentPod)
