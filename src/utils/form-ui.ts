@@ -173,6 +173,14 @@ function getSubjectLinkId(currentLink: string) {
 
   return `${currentLink}#${id}`
 }
+
+function getClonePart(childs: any) {
+  return {
+    ...childs,
+    'ui:partsClone': childs['ui:parts']
+  }
+}
+
 /**
  *  Form Model with user data pod
  * @param modelUi
@@ -251,19 +259,13 @@ async function formModel(
           const { value } = fieldData
           existField = true
           childs = await partsFields(childs, { fieldObject, property, podUri, value })
-          childs = {
-            ...childs,
-            'ui:partsClone': childs['ui:parts']
-          }
+          childs = getClonePart(childs)
         }
 
         if (!existField) {
           const idLink = getSubjectLinkId(podUri)
           childs = await partsFields(childs, { fieldObject, property, podUri, value: idLink })
-          childs = {
-            ...childs,
-            'ui:partsClone': childs['ui:parts']
-          }
+          childs = getClonePart(childs)
         }
       }
 
