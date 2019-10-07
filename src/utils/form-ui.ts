@@ -158,7 +158,7 @@ async function partsFields(childs: any, options: any) {
       [uniqueName]: {
         'ui:name': uniqueName,
         'ui:value': value,
-        ...(await FormModel(fieldObject, value, property, podUri))
+        ...(await formModel(fieldObject, value, property, podUri))
       }
     }
   }
@@ -178,7 +178,7 @@ function getSubjectLinkId(currentLink: string) {
  * @param modelUi
  * @param podUri
  */
-async function FormModel(
+async function formModel(
   modelUi: any,
   podUri: string,
   parentProperty?: string,
@@ -251,11 +251,19 @@ async function FormModel(
           const { value } = fieldData
           existField = true
           childs = await partsFields(childs, { fieldObject, property, podUri, value })
+          childs = {
+            ...childs,
+            'ui:partsClone': childs['ui:parts']
+          }
         }
 
         if (!existField) {
           const idLink = getSubjectLinkId(podUri)
           childs = await partsFields(childs, { fieldObject, property, podUri, value: idLink })
+          childs = {
+            ...childs,
+            'ui:partsClone': childs['ui:parts']
+          }
         }
       }
 
@@ -268,7 +276,7 @@ async function FormModel(
         newModelUi = {
           ...parentPro,
           'ui:reference': fieldValue,
-          ...(await FormModel(fieldObject, podUri))
+          ...(await formModel(fieldObject, podUri))
         }
       }
     }
@@ -322,18 +330,17 @@ async function FormModel(
  * @param partsPath
  */
 export async function convertFormModel(documentUri: any, documentPod: any) {
-  const existDocumentPod =
-    documentPod || documentPod !== '' ? await existDocument(documentPod) : null
   const model = await turtleToFormUi(data[documentUri])
   let modelUi = {
     '@context': {
       ...CONTEXT['@context'],
-      subject: subjectPrefix(documentUri)
+      subject: subjectPrefix(documentUri),
+      document: documentPod
     },
     'ui:parts': { ...model }
   }
 
-  const modelWidthData = FormModel(modelUi, documentPod)
+  const modelWidthData = formModel(modelUi, documentPod)
 
   return modelWidthData
 }
