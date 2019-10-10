@@ -32,16 +32,37 @@ function capitalize(word: string) {
 }
 
 /**
- * Get Label from property string
+ * Get Label from external sources
  * @param property
  */
-function findLabel(property: string) {
+async function findLabel(property: string) {
   if (property.includes('#')) {
-    const label = property.split('#')[1]
-    return capitalize(label.replace(/[^a-zA-Z ]/g, ' '))
+    // Try to fetch rdfs:label from the vocabulary
+    const vocabDoc = getFetchUrl(property.split('#')[0])
+    const vocabLabel = await data.from(vocabDoc)[property].label
+    if (vocabLabel.value) {
+      return vocabLabel.value
+    } else {
+      // If no label, use the predicate name
+      const label = property.split('#')[1]
+      return capitalize(label.replace(/[^a-zA-Z ]/g, ' '))
+    }
   }
-
   return 'noLabel'
+}
+
+/**
+ * Return a version of the property that includes https, to work around https/http mismatched domains
+ * This is applicable for a few select vocabularies, including
+ * @param property
+ */
+function getFetchUrl(property: string) {
+  if (property.includes('http://www.w3.org/2006/vcard')) {
+    const newUrl = new URL(property)
+    return 'https://' + newUrl.hostname + newUrl.pathname
+  } else {
+    return property
+  }
 }
 
 /**
@@ -125,7 +146,7 @@ async function turtleToFormUi(document: any) {
       !fields[subjectPrefix]['ui:parts'] &&
       fields[subjectPrefix]['ui:property']
     ) {
-      const label = findLabel(fields[subjectPrefix]['ui:property'])
+      const label = await findLabel(fields[subjectPrefix]['ui:property'])
       fields = { ...fields, [subjectPrefix]: { ...fields[subjectPrefix], 'ui:label': label } }
     }
   }
