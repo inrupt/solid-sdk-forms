@@ -35,10 +35,14 @@ export const CONTEXT: any = {
 }
 export const UI = {
   PARTS: 'ui:parts',
+  CLONE_PARTS: 'ui:partsClone',
+  LABEL: 'ui:label',
   PROPERTY: 'ui:property',
   PARENT_PROPERTY: 'ui:parentProperty',
   BASE: 'ui:base',
   OLDVALUE: 'ui:oldValue',
   VALUE: 'ui:value',
+  VALUES: 'ui:values',
+  REFERENCE: 'ui:reference',
   NAME: 'ui:name'
 }

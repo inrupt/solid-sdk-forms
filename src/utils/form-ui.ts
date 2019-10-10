@@ -2,6 +2,7 @@ import data from '@solid/query-ldflex'
 import auth from 'solid-auth-client'
 import uuid from 'uuid'
 import { CONTEXT } from '@constants'
+import { UI } from '@constants'
 
 /**
  * Find prefix context to add into object property
@@ -142,12 +143,12 @@ async function turtleToFormUi(document: any) {
     }
 
     if (
-      !fields[subjectPrefix]['ui:label'] &&
-      !fields[subjectPrefix]['ui:parts'] &&
-      fields[subjectPrefix]['ui:property']
+      !fields[subjectPrefix][UI.LABEL] &&
+      !fields[subjectPrefix][UI.PARTS] &&
+      fields[subjectPrefix][UI.PROPERTY]
     ) {
-      const label = await findLabel(fields[subjectPrefix]['ui:property'])
-      fields = { ...fields, [subjectPrefix]: { ...fields[subjectPrefix], 'ui:label': label } }
+      const label = await findLabel(fields[subjectPrefix][UI.PROPERTY])
+      fields = { ...fields, [subjectPrefix]: { ...fields[subjectPrefix], [UI.LABEL]: label } }
     }
   }
   return fields
@@ -174,12 +175,12 @@ async function partsFields(childs: any, options: any) {
   const uniqueName = uuid()
   const { fieldObject, value, property, podUri } = options
   return {
-    'ui:parts': {
-      ...childs['ui:parts'],
+    [UI.PARTS]: {
+      ...childs[UI.PARTS],
       [uniqueName]: {
-        'ui:name': uniqueName,
-        'ui:value': value,
-        ...(await FormModel(fieldObject, value, property, podUri))
+        [UI.NAME]: uniqueName,
+        [UI.VALUE]: value,
+        ...(await formModel(fieldObject, value, property, podUri))
       }
     }
   }
@@ -194,12 +195,20 @@ function getSubjectLinkId(currentLink: string) {
 
   return `${currentLink}#${id}`
 }
+
+function getClonePart(childs: any) {
+  return {
+    ...childs,
+    [UI.CLONE_PARTS]: childs[UI.PARTS]
+  }
+}
+
 /**
  *  Form Model with user data pod
  * @param modelUi
  * @param podUri
  */
-async function FormModel(
+async function formModel(
   modelUi: any,
   podUri: string,
   parentProperty?: string,
@@ -208,11 +217,11 @@ async function FormModel(
   /**
    * Get fields parts from Form Model
    */
-  const parts = modelUi['ui:parts']
+  const parts = modelUi[UI.PARTS]
   /**
    * Get fields key into Form Model to loop over each field
    */
-  const fields: any = Object.keys(modelUi['ui:parts'])
+  const fields: any = Object.keys(modelUi[UI.PARTS])
   let newModelUi = modelUi
 
   /**
@@ -221,10 +230,10 @@ async function FormModel(
    */
   for await (const fieldValue of fields) {
     let fieldObject = parts[fieldValue]
-    let property = fieldObject['ui:property']
+    let property = fieldObject[UI.PROPERTY]
     const isMultiple = fieldObject['rdf:type'].includes('Multiple')
     const isGroup = fieldObject['rdf:type'].includes('Group')
-    const hasParts = fieldObject['ui:parts']
+    const hasParts = fieldObject[UI.PARTS]
     let parentValue = ''
     let childs: any = {}
     let updatedField: any = []
@@ -237,7 +246,7 @@ async function FormModel(
       if (fieldObject['rdf:type'].includes('Classifier')) {
         let result: any
 
-        if (fieldObject['ui:values']) {
+        if (fieldObject[UI.VALUES]) {
           result = podUri && (await data[podUri][property])
 
           if (result) {
@@ -272,24 +281,26 @@ async function FormModel(
           const { value } = fieldData
           existField = true
           childs = await partsFields(childs, { fieldObject, property, podUri, value })
+          childs = getClonePart(childs)
         }
 
         if (!existField) {
           const idLink = getSubjectLinkId(podUri)
           childs = await partsFields(childs, { fieldObject, property, podUri, value: idLink })
+          childs = getClonePart(childs)
         }
       }
 
       if (isGroup) {
         const parentPro =
           parentProperty && parentUri
-            ? { 'ui:parentProperty': parentProperty, 'ui:base': parentUri }
+            ? { [UI.PARENT_PROPERTY]: parentProperty, [UI.BASE]: parentUri }
             : {}
 
         newModelUi = {
           ...parentPro,
-          'ui:reference': fieldValue,
-          ...(await FormModel(fieldObject, podUri))
+          [UI.REFERENCE]: fieldValue,
+          ...(await formModel(fieldObject, podUri))
         }
       }
     }
@@ -301,14 +312,14 @@ async function FormModel(
     const objectValue =
       parentValue && !isMultiple
         ? {
-            'ui:value': parentValue,
-            'ui:oldValue': parentValue,
-            'ui:name': uuid(),
-            'ui:base': podUri
+            [UI.VALUE]: parentValue,
+            [UI.OLDVALUE]: parentValue,
+            [UI.NAME]: uuid(),
+            [UI.BASE]: podUri
           }
-        : { 'ui:name': uuid(), 'ui:base': podUri }
+        : { [UI.NAME]: uuid(), [UI.BASE]: podUri }
 
-    if (fieldObject['ui:values']) {
+    if (fieldObject[UI.VALUES]) {
       fieldObject = {
         ...fieldObject
       }
@@ -328,8 +339,8 @@ async function FormModel(
 
     newModelUi = {
       ...newModelUi,
-      'ui:parts': {
-        ...newModelUi['ui:parts'],
+      [UI.PARTS]: {
+        ...newModelUi[UI.PARTS],
         ...updatedField
       }
     }
@@ -343,18 +354,17 @@ async function FormModel(
  * @param partsPath
  */
 export async function convertFormModel(documentUri: any, documentPod: any) {
-  const existDocumentPod =
-    documentPod || documentPod !== '' ? await existDocument(documentPod) : null
   const model = await turtleToFormUi(data[documentUri])
   let modelUi = {
     '@context': {
       ...CONTEXT['@context'],
-      subject: subjectPrefix(documentUri)
+      subject: subjectPrefix(documentUri),
+      document: documentPod
     },
-    'ui:parts': { ...model }
+    [UI.PARTS]: { ...model }
   }
 
-  const modelWidthData = FormModel(modelUi, documentPod)
+  const modelWidthData = formModel(modelUi, documentPod)
 
   return modelWidthData
 }
