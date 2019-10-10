@@ -41,7 +41,7 @@ async function findLabel(property: string) {
     // Try to fetch rdfs:label from the vocabulary
     const vocabDoc = getFetchUrl(property.split('#')[0])
     const vocabLabel = await data.from(vocabDoc)[property].label
-    if (vocabLabel.value) {
+    if (vocabLabel && vocabLabel.value) {
       return vocabLabel.value
     } else {
       // If no label, use the predicate name
