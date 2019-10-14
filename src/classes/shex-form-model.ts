@@ -36,6 +36,37 @@ export class ShexFormModel {
   getSubjectNode(term: string) {
     return namedNode(`#${term}`)
   }
+
+  getFieldType(exp: any = {}) {
+    /**
+     * Check if field has values this mean that will be a Classifier
+     */
+    if (exp.values) {
+      return 'Classifier'
+    }
+    /**
+     * By default if not has dataType we will use text field
+     */
+    if (!exp.datatype.includes('#')) {
+      return 'SingleLineTextField'
+    }
+
+    /**
+     * Get type from type prefix
+     */
+    const type = exp.datatype.split('#')[1]
+
+    switch (type) {
+      case 'date':
+        return 'DateField'
+      case 'datetime':
+        return 'DateTimeField'
+      case 'time':
+        return 'TimeField'
+      default:
+        return 'SingleLineTextField'
+    }
+  }
   /**
    * Convert SheEx to Form Model
    */
@@ -201,7 +232,9 @@ export class ShexFormModel {
             'id' in te ? this.jsonLdtoRdf(te.id) : blankNode(`${sanitizedPath}_parts_${i}`)
 
           const optionsType = this.findShapeExpressionOptions(te.valueExpr)
-          let fieldType = te.valueExpr && te.valueExpr.values ? 'Classifier' : 'SingleLineTextField'
+
+          let fieldType = this.getFieldType(te.valueExpr)
+          console.log('hello')
 
           if (optionsType) {
             const { type } = optionsType
