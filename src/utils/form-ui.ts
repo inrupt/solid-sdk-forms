@@ -37,7 +37,7 @@ function capitalize(word: string) {
  * @param property
  */
 async function findLabel(property: string) {
-  if (property.includes('#')) {
+  if (property && property.includes('#')) {
     // Try to fetch rdfs:label from the vocabulary
     const vocabDoc = getFetchUrl(property.split('#')[0])
     const vocabLabel = await data.from(vocabDoc)[property].label
@@ -58,7 +58,7 @@ async function findLabel(property: string) {
  * @param property
  */
 function getFetchUrl(property: string) {
-  if (property.includes('http://www.w3.org/2006/vcard')) {
+  if (property && property.includes('http://www.w3.org/2006/vcard')) {
     const newUrl = new URL(property)
     return 'https://' + newUrl.hostname + newUrl.pathname
   } else {
@@ -72,6 +72,7 @@ function getFetchUrl(property: string) {
  */
 function getPredicateName(predicate: string): any {
   const prefix = findContext(predicate)
+
   if (predicate.includes('title')) {
     return `${prefix}title`
   }
@@ -158,7 +159,7 @@ async function turtleToFormUi(document: any) {
  * Get the subject prefix
  * @param document
  */
-function subjectPrefix(document: any) {
+function subjectPrefix(document: string) {
   if (document.includes('#')) {
     return `${document.split('#')[0]}#`
   }
@@ -180,7 +181,7 @@ async function partsFields(childs: any, options: any) {
       [uniqueName]: {
         [UI.NAME]: uniqueName,
         [UI.VALUE]: value,
-        ...(await formModel(fieldObject, value, property, podUri))
+        ...(await mapFormModelWithData(fieldObject, value, property, podUri))
       }
     }
   }
@@ -208,7 +209,7 @@ function getClonePart(childs: any) {
  * @param modelUi
  * @param podUri
  */
-async function formModel(
+export async function mapFormModelWithData(
   modelUi: any,
   podUri: string,
   parentProperty?: string,
@@ -300,7 +301,7 @@ async function formModel(
         newModelUi = {
           ...parentPro,
           [UI.REFERENCE]: fieldValue,
-          ...(await formModel(fieldObject, podUri))
+          ...(await mapFormModelWithData(fieldObject, podUri))
         }
       }
     }
@@ -364,7 +365,7 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     [UI.PARTS]: { ...model }
   }
 
-  const modelWidthData = formModel(modelUi, documentPod)
+  const modelWidthData = mapFormModelWithData(modelUi, documentPod)
 
   return modelWidthData
 }
@@ -386,6 +387,6 @@ async function loopList(doc: any) {
 }
 
 export function suffixFromJsonLd(predicate: string, context: any): string {
-  const suffix = predicate.split(':')
+  const suffix = predicate && predicate.split(':')
   return `${context[suffix[0]]}${suffix[1]}`
 }

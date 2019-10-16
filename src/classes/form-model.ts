@@ -13,7 +13,7 @@ export class FormModel {
    * @return {String} document extension
    */
   schemaType = (url: String) => {
-    const name = url.split('.')
+    const name = url && url.split('.')
     return name[name.length - 1]
   }
 
@@ -25,7 +25,6 @@ export class FormModel {
   parseShexC = (schemaText: String, url: String) => {
     try {
       const parser = shexParser.construct(url, null, { index: true })
-
       return parser.parse(schemaText)
     } catch (error) {
       throw Error(error)
@@ -84,7 +83,6 @@ export class FormModel {
       const schemaText = await solidFetch.fetchSchema(url)
       const format = this.schemaType(url)
       let schema
-
       switch (format.toLowerCase()) {
         case 'shex':
           schema = this.parseShexC(schemaText, url)
@@ -136,7 +134,6 @@ export class FormModel {
     try {
       const schema = await this.parseSchema(this.url)
       const formModel = new ShexFormModel(schema, this.documentUri)
-
       return formModel.convert()
     } catch (error) {
       throw Error(error)

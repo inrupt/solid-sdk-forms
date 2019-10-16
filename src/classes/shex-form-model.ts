@@ -47,14 +47,14 @@ export class ShexFormModel {
     /**
      * By default if not has dataType we will use text field
      */
-    if (!exp.datatype.includes('#')) {
+    if (exp.datatype && !exp.datatype.includes('#')) {
       return 'SingleLineTextField'
     }
 
     /**
      * Get type from type prefix
      */
-    const type = exp.datatype.split('#')[1]
+    const type = exp.datatype && exp.datatype.split('#')[1]
 
     switch (type) {
       case 'date':
@@ -90,7 +90,6 @@ export class ShexFormModel {
      * Traverse the shape to create turtle object
      */
     this.walkShape(start, rootFormTerm, this.localName(start.id))
-
     const writer = new Writer({
       prefixes: { '': IRI_this, ui: NS_UI, dc: NS_DC },
       listHeads: this.graph.sequesterLists()
@@ -98,7 +97,6 @@ export class ShexFormModel {
     writer.addQuads(this.graph.getQuads())
     let formModel
     writer.end((error, result) => (formModel = result))
-
     return formModel
   }
   /**
@@ -234,7 +232,6 @@ export class ShexFormModel {
           const optionsType = this.findShapeExpressionOptions(te.valueExpr)
 
           let fieldType = this.getFieldType(te.valueExpr)
-          console.log('hello')
 
           if (optionsType) {
             const { type } = optionsType
@@ -272,7 +269,7 @@ export class ShexFormModel {
                 )
                 // add the parts list entry for comment
                 parts.add(commentTerm, `${sanitizedPath}_parts_${i}_comment`)
-              } else if (a.predicate.includes('label')) {
+              } else if (a && a.predicate && a.predicate.includes('label')) {
                 /**
                  * insert one quad into n3 store
                  */
