@@ -215,6 +215,9 @@ export async function mapFormModelWithData(
   parentProperty?: string,
   parentUri?: string
 ) {
+  if (podUri.includes('#') && !parentUri && !parentProperty) {
+    await data.clearCache(podUri.split('#')[0])
+  }
   /**
    * Get fields parts from Form Model
    */
@@ -254,7 +257,6 @@ export async function mapFormModelWithData(
             parentValue = result.value || ''
           }
         } else {
-          // property = 'https://www.w99/02/22-rdf-syntax-ns#type'
           result = podUri && (await data[podUri].type)
           if (result) {
             parentValue = result.value || ''
