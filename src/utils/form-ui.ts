@@ -204,6 +204,31 @@ function getClonePart(childs: any) {
   }
 }
 
+export async function mapFormObjectWidthData(formObject: any, podUri: string) {
+  let updatedFormObject = { ...formObject }
+  const fields = Object.keys(formObject)
+  await data.clearCache(podUri.split('#')[0])
+
+  for await (const field of fields) {
+    const currentField = formObject[field]
+    let result
+    if (currentField.parent) {
+      result = await data[currentField.parent['ui:value']][currentField['ui:property']]
+    } else {
+      result = await data[currentField['ui:base']][currentField['ui:property']]
+    }
+    updatedFormObject = {
+      ...updatedFormObject,
+      [field]: {
+        ...currentField,
+        'ui:oldValue': result.value
+      }
+    }
+  }
+
+  return updatedFormObject
+}
+
 /**
  *  Form Model with user data pod
  * @param modelUi

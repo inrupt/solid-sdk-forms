@@ -57,8 +57,8 @@ export class FormActions {
   /**
    * Save data intot he pod
    */
-  saveData = async () => {
-    const keyFields = Object.keys(this.formObject)
+  saveData = async (customFormObject?: any) => {
+    const keyFields = Object.keys(customFormObject || this.formObject)
 
     for await (const key of keyFields) {
       const currentField = this.formObject[key]
