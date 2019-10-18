@@ -204,11 +204,20 @@ function getClonePart(childs: any) {
   }
 }
 
-export async function mapFormObjectWidthData(formObject: any, podUri: string) {
+/**
+ * Updates the formObject with the new values if something has been updated in the podUri's turtle file
+ * @param formObject
+ * @param podUri
+ */
+export async function mapFormObjectWithData(formObject: any, podUri: string) {
   let updatedFormObject = { ...formObject }
   const fields = Object.keys(formObject)
+  // Clearing cache to force the podUri to be requested again
   await data.clearCache(podUri.split('#')[0])
 
+  /**
+   * Looping into each of the form's updated fields to compare with what the actual data has
+   */
   for await (const field of fields) {
     const currentField = formObject[field]
     let result
