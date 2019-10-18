@@ -222,9 +222,9 @@ export async function mapFormObjectWithData(formObject: any, podUri: string) {
     const currentField = formObject[field]
     let result
     if (currentField.parent) {
-      result = await data[currentField.parent['ui:value']][currentField['ui:property']]
+      result = await data[currentField.parent[UI.VALUE]][currentField[UI.PROPERTY]]
     } else {
-      result = await data[currentField['ui:base']][currentField['ui:property']]
+      result = await data[currentField[UI.BASE]][currentField[UI.PROPERTY]]
     }
     updatedFormObject = {
       ...updatedFormObject,
