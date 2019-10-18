@@ -205,6 +205,40 @@ function getClonePart(childs: any) {
 }
 
 /**
+ * Updates the formObject with the new values if something has been updated in the podUri's turtle file
+ * @param formObject
+ * @param podUri
+ */
+export async function mapFormObjectWithData(formObject: any, podUri: string) {
+  let updatedFormObject = { ...formObject }
+  const fields = Object.keys(formObject)
+  // Clearing cache to force the podUri to be requested again
+  await data.clearCache(podUri.split('#')[0])
+
+  /**
+   * Looping into each of the form's updated fields to compare with what the actual data has
+   */
+  for await (const field of fields) {
+    const currentField = formObject[field]
+    let result
+    if (currentField.parent) {
+      result = await data[currentField.parent[UI.VALUE]][currentField[UI.PROPERTY]]
+    } else {
+      result = await data[currentField[UI.BASE]][currentField[UI.PROPERTY]]
+    }
+    updatedFormObject = {
+      ...updatedFormObject,
+      [field]: {
+        ...currentField,
+        'ui:oldValue': result.value
+      }
+    }
+  }
+
+  return updatedFormObject
+}
+
+/**
  *  Form Model with user data pod
  * @param modelUi
  * @param podUri
@@ -215,6 +249,9 @@ export async function mapFormModelWithData(
   parentProperty?: string,
   parentUri?: string
 ) {
+  if (podUri.includes('#') && !parentUri && !parentProperty) {
+    await data.clearCache(podUri.split('#')[0])
+  }
   /**
    * Get fields parts from Form Model
    */
@@ -254,7 +291,6 @@ export async function mapFormModelWithData(
             parentValue = result.value || ''
           }
         } else {
-          // property = 'https://www.w99/02/22-rdf-syntax-ns#type'
           result = podUri && (await data[podUri].type)
           if (result) {
             parentValue = result.value || ''
