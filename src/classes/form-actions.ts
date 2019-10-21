@@ -2,6 +2,7 @@ import uuid from 'uuid'
 import data from '@solid/query-ldflex'
 import { namedNode } from '@rdfjs/data-model'
 import { UI } from '@constants'
+import { validator } from '@utils'
 
 /**
  * FormAction class to managament Form Model forms on solid
@@ -54,6 +55,24 @@ export class FormActions {
 
     return this.formObject
   }
+
+  getValidators = (field: any) => {}
+
+  validator = (field: any) => {
+    let updatedField = { ...field, 'ui:valid': true }
+
+    for (const currentValidator of validator.validators) {
+      if (Object.keys(field).find(key => key === currentValidator.name)) {
+        updatedField = {
+          ...updatedField,
+          'ui:valid': currentValidator.action(field)
+        }
+        break
+      }
+    }
+
+    return updatedField
+  }
   /**
    * Save data intot he pod
    */
@@ -62,44 +81,51 @@ export class FormActions {
 
     for await (const key of keyFields) {
       const currentField = this.formObject[key]
+      let validatedField = { ...currentField }
 
       if (currentField) {
-        const predicate = currentField[UI.PROPERTY]
-        const { value } = currentField
+        validatedField = this.validator(currentField)
         const isType = currentField['ui:property'].includes('type')
-        let podData
 
-        currentField.value = isType ? namedNode(currentField.value) : currentField.value
-        const updatedValue = typeof value === 'boolean' ? value.toString() : value
+        if (validatedField['ui:valid']) {
+          const predicate = currentField[UI.PROPERTY]
+          const { value } = currentField
+          let podData
 
-        if (currentField.parent) {
-          podData = isType
-            ? data[currentField.parent[UI.VALUE]].type
-            : data[currentField.parent[UI.VALUE]][predicate]
+          validatedField[UI.VALUE] = isType ? namedNode(currentField.value) : currentField.value
+          const updatedValue = typeof value === 'boolean' ? value.toString() : value
 
-          if (currentField[UI.OLDVALUE] && currentField[UI.OLDVALUE] !== '') {
-            await podData.set(updatedValue)
+          if (currentField.parent) {
+            podData = isType
+              ? data[currentField.parent[UI.VALUE]].type
+              : data[currentField.parent[UI.VALUE]][predicate]
+
+            if (currentField[UI.OLDVALUE] && currentField[UI.OLDVALUE] !== '') {
+              await podData.set(updatedValue)
+            } else {
+              const { parent } = currentField
+
+              await data[parent[UI.BASE]][parent[UI.PARENT_PROPERTY]].add(
+                namedNode(parent[UI.VALUE])
+              )
+              await podData.add(updatedValue)
+            }
           } else {
-            const { parent } = currentField
-
-            await data[parent[UI.BASE]][parent[UI.PARENT_PROPERTY]].add(namedNode(parent[UI.VALUE]))
-            await podData.add(updatedValue)
-          }
-        } else {
-          podData = isType ? data[currentField[UI.BASE]] : data[currentField[UI.BASE]][predicate]
-
-          if (currentField[UI.OLDVALUE]) {
-            await podData.set(updatedValue)
-          } else {
-            await podData.add(updatedValue)
+            podData = isType ? data[currentField[UI.BASE]] : data[currentField[UI.BASE]][predicate]
+            if (currentField[UI.OLDVALUE]) {
+              await podData.set(updatedValue)
+            } else {
+              await podData.add(updatedValue)
+            }
           }
         }
         /**
          * Update ui:value and  ui:oldValue on formModel and reset formObject
          */
         this.updateFieldModel(
-          currentField[UI.NAME],
-          isType ? currentField.value.value : currentField.value
+          validatedField[UI.NAME],
+          isType ? validatedField[UI.VALUE] : validatedField.value,
+          validatedField['ui:valid']
         )
       }
     }
@@ -130,7 +156,7 @@ export class FormActions {
   /**
    * Field field object into Form Model
    */
-  updateFieldModel = (name: string, newValue: string) => {
+  updateFieldModel = (name: string, newValue: string, valid: boolean = true) => {
     const partsObject = this.formModel[UI.PARTS]
     let found = false
 
@@ -142,7 +168,8 @@ export class FormActions {
             [fieldKey]: {
               ...model[fieldKey],
               [UI.VALUE]: newValue,
-              [UI.OLDVALUE]: newValue
+              [UI.OLDVALUE]: newValue !== '' ? newValue : model[fieldKey][UI.OLDVALUE],
+              ['ui:valid']: valid
             }
           }
           found = true
