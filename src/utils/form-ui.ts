@@ -230,7 +230,7 @@ export async function mapFormObjectWithData(formObject: any, podUri: string) {
       ...updatedFormObject,
       [field]: {
         ...currentField,
-        'ui:oldValue': result.value
+        [UI.OLDVALUE]: result.value
       }
     }
   }
@@ -353,9 +353,9 @@ export async function mapFormModelWithData(
             [UI.OLDVALUE]: parentValue,
             [UI.NAME]: uuid(),
             [UI.BASE]: podUri,
-            'ui:valid': true
+            [UI.VALID]: true
           }
-        : { [UI.NAME]: uuid(), [UI.BASE]: podUri, 'ui:valid': true }
+        : { [UI.NAME]: uuid(), [UI.BASE]: podUri, [UI.VALID]: true }
 
     if (fieldObject[UI.VALUES]) {
       fieldObject = {

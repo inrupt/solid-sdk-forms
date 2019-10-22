@@ -56,18 +56,20 @@ export class FormActions {
     return this.formObject
   }
 
-  getValidators = (field: any) => {}
-
   validator = (field: any) => {
-    let updatedField = { ...field, 'ui:valid': true }
+    let updatedField = { ...field, [UI.VALID]: true }
 
     for (const currentValidator of validator.validators) {
       if (Object.keys(field).find(key => key === currentValidator.name)) {
-        updatedField = {
-          ...updatedField,
-          'ui:valid': currentValidator.action(field)
+        const { valid, errorMessage } = currentValidator.action(field)
+        if (!valid) {
+          updatedField = {
+            ...updatedField,
+            [UI.VALID]: valid,
+            [UI.DEFAULT_ERROR]: errorMessage
+          }
+          break
         }
-        break
       }
     }
 
@@ -85,9 +87,10 @@ export class FormActions {
 
       if (currentField) {
         validatedField = this.validator(currentField)
-        const isType = currentField['ui:property'].includes('type')
 
-        if (validatedField['ui:valid']) {
+        const isType = currentField[UI.PROPERTY].includes('type')
+
+        if (validatedField[UI.VALID]) {
           const predicate = currentField[UI.PROPERTY]
           const { value } = currentField
           let podData
@@ -125,7 +128,8 @@ export class FormActions {
         this.updateFieldModel(
           validatedField[UI.NAME],
           isType ? validatedField[UI.VALUE] : validatedField.value,
-          validatedField['ui:valid']
+          validatedField[UI.VALID],
+          validatedField[UI.DEFAULT_ERROR]
         )
       }
     }
@@ -156,7 +160,12 @@ export class FormActions {
   /**
    * Field field object into Form Model
    */
-  updateFieldModel = (name: string, newValue: string, valid: boolean = true) => {
+  updateFieldModel = (
+    name: string,
+    newValue: string,
+    valid: boolean = true,
+    errorMessage: string
+  ) => {
     const partsObject = this.formModel[UI.PARTS]
     let found = false
 
@@ -169,7 +178,8 @@ export class FormActions {
               ...model[fieldKey],
               [UI.VALUE]: newValue,
               [UI.OLDVALUE]: newValue !== '' ? newValue : model[fieldKey][UI.OLDVALUE],
-              ['ui:valid']: valid
+              [UI.VALID]: valid,
+              [UI.DEFAULT_ERROR]: errorMessage
             }
           }
           found = true

@@ -44,5 +44,17 @@ export const UI = {
   VALUE: 'ui:value',
   VALUES: 'ui:values',
   REFERENCE: 'ui:reference',
-  NAME: 'ui:name'
+  NAME: 'ui:name',
+  VALID: 'ui:valid',
+  REQUIRED_ERROR: 'ui:requiredError',
+  VALIDATION_ERROR: 'ui:validationError',
+  REQUIRED: 'ui:required',
+  PATTERN: 'ui:pattern',
+  MIN_LENGTH: 'ui:minLength',
+  MAX_LENGTH: 'ui:maxLength',
+  MIN_VALUE: 'ui:minValue',
+  MAX_VALUE: 'ui:maxValue',
+  MIN_DATE_OFFSET: 'ui:mindateOffset',
+  MAX_DATE_OFFSET: 'ui:maxdateOffset',
+  DEFAULT_ERROR: 'ui:defaultError'
 }

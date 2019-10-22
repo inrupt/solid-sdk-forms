@@ -1,50 +1,76 @@
 import moment from 'moment'
+import { UI } from '@constants'
+
+const actionMethod = (condition: boolean, message: string) => {
+  return {
+    valid: condition,
+    errorMessage: message
+  }
+}
 
 export const validators = [
   {
-    name: 'ui:required',
-    action: (field: any) => !(field.value === '' || !field.value)
+    name: UI.REQUIRED,
+    action: (field: any) =>
+      actionMethod(!(field.value === '' || !field.value), field[UI.REQUIRED_ERROR])
   },
   {
-    name: 'ui:pattern',
-    action: (field: any) => field.match(field.pattern)
-  },
-  {
-    name: 'ui:minLength',
-    action: (field: any) => field.value.length >= field['minLength']
-  },
-  {
-    name: 'ui:minLength',
-    action: (field: any) => field.value.length <= field['maxLength']
-  },
-  {
-    name: 'ui:minValue',
+    name: UI.PATTERN,
     action: (field: any) => {
-      if (field['rdf:type'].includes('Date')) {
-        return moment(field.value).isAfter(moment(field['ui:minValue']))
-      }
-
-      return field.value >= field['ui:minValue']
+      const regex = new RegExp(field[UI.PATTERN])
+      return actionMethod(regex.test(field.value), field[UI.VALIDATION_ERROR])
     }
   },
   {
-    name: 'ui:maxValue',
+    name: UI.MIN_LENGTH,
+    action: (field: any) =>
+      actionMethod(field.value.length >= field[UI.MIN_LENGTH], field[UI.VALIDATION_ERROR])
+  },
+  {
+    name: UI.MAX_LENGTH,
+    action: (field: any) =>
+      actionMethod(field.value.length <= field[UI.MAX_LENGTH], field[UI.VALIDATION_ERROR])
+  },
+  {
+    name: UI.MIN_VALUE,
     action: (field: any) => {
       if (field['rdf:type'].includes('Date')) {
-        return moment(field.value).isBefore(moment(field['ui:maxValue']))
+        return actionMethod(
+          moment(field.value).isAfter(moment(field[UI.MIN_VALUE])),
+          field[UI.VALIDATION_ERROR]
+        )
       }
 
-      return field.value >= field['ui:maxValue']
+      return actionMethod(field.value >= field[UI.MIN_VALUE], field[UI.VALIDATION_ERROR])
     }
   },
   {
-    name: 'ui:mindateOffset',
-    action: (field: any) =>
-      moment(field.value).isAfter(moment().subtract(field['ui:mindateOffset'], 'd'))
+    name: UI.MAX_VALUE,
+    action: (field: any) => {
+      if (field['rdf:type'].includes('Date')) {
+        return actionMethod(
+          moment(field.value).isBefore(moment(field[UI.MAX_VALUE])),
+          field[UI.VALIDATION_ERROR]
+        )
+      }
+
+      return actionMethod(field.value >= field[UI.MAX_VALUE], field[UI.VALIDATION_ERROR])
+    }
   },
   {
-    name: 'ui:maxdateOffset',
+    name: UI.MIN_DATE_OFFSET,
     action: (field: any) =>
-      moment(field.value).isBefore(moment().add(field['ui:maxdateOffset'], 'd'))
+      actionMethod(
+        moment(field.value).isAfter(moment().subtract(field[UI.MIN_DATE_OFFSET], 'd')),
+        field[UI.VALIDATION_ERROR]
+      )
+  },
+  {
+    name: UI.MAX_DATE_OFFSET,
+    action: (field: any) =>
+      actionMethod(
+        moment(field.value).isBefore(moment().add(field[UI.MAX_DATE_OFFSET], 'd')),
+        field[UI.VALIDATION_ERROR]
+      )
   }
 ]
