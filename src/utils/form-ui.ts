@@ -238,6 +238,10 @@ export async function mapFormObjectWithData(formObject: any, podUri: string) {
   return updatedFormObject
 }
 
+function existPodUri(podUri: string) {
+  return podUri.includes('http') && podUri && podUri !== ''
+}
+
 /**
  *  Form Model with user data pod
  * @param modelUi
@@ -285,19 +289,19 @@ export async function mapFormModelWithData(
         let result: any
 
         if (fieldObject[UI.VALUES]) {
-          result = podUri && (await data[podUri][property])
+          result = existPodUri(podUri) && (await data[podUri][property])
 
           if (result) {
             parentValue = result.value || ''
           }
         } else {
-          result = podUri && (await data[podUri].type)
+          result = existPodUri(podUri) && (await data[podUri].type)
           if (result) {
             parentValue = result.value || ''
           }
         }
       } else {
-        const field = podUri && (await data[podUri][property])
+        const field = existPodUri(podUri) && (await data[podUri][property])
         parentValue = (field && field.value) || ''
       }
     }
@@ -313,12 +317,13 @@ export async function mapFormModelWithData(
          * Add unique id for parts fields when podUri is empty or not exist.
          */
         let existField = false
-
-        for await (let fieldData of data[podUri][property]) {
-          const { value } = fieldData
-          existField = true
-          childs = await partsFields(childs, { fieldObject, property, podUri, value })
-          childs = getClonePart(childs)
+        if (existPodUri(podUri)) {
+          for await (let fieldData of data[podUri][property]) {
+            const { value } = fieldData
+            existField = true
+            childs = await partsFields(childs, { fieldObject, property, podUri, value })
+            childs = getClonePart(childs)
+          }
         }
 
         if (!existField) {
