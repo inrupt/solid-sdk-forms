@@ -109,7 +109,6 @@ async function turtleToFormUi(document: any) {
   const doc = await document
   const partsPath = 'http://www.w3.org/ns/ui#parts'
   const parts: any = await loopList(doc[partsPath])
-
   for await (const field of parts) {
     const subjectKey: string = getPredicateName(field)
     const subjectPrefix = `subject:${subjectKey}`
@@ -265,7 +264,6 @@ export async function mapFormModelWithData(
    */
   const fields: any = Object.keys(modelUi[UI.PARTS])
   let newModelUi = modelUi
-
   /**
    * Loop into each fields and find the property into Form Model to
    * match with pod property data
@@ -290,15 +288,10 @@ export async function mapFormModelWithData(
 
         if (fieldObject[UI.VALUES]) {
           result = existPodUri(podUri) && (await data[podUri][property])
-
-          if (result) {
-            parentValue = result.value || ''
-          }
+          parentValue = (result && result.value) || ''
         } else {
           result = existPodUri(podUri) && (await data[podUri].type)
-          if (result) {
-            parentValue = result.value || ''
-          }
+          parentValue = (result && result.value) || ''
         }
       } else {
         const field = existPodUri(podUri) && (await data[podUri][property])
