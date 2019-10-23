@@ -109,7 +109,6 @@ async function turtleToFormUi(document: any) {
   const doc = await document
   const partsPath = 'http://www.w3.org/ns/ui#parts'
   const parts: any = await loopList(doc[partsPath])
-
   for await (const field of parts) {
     const subjectKey: string = getPredicateName(field)
     const subjectPrefix = `subject:${subjectKey}`
@@ -238,6 +237,10 @@ export async function mapFormObjectWithData(formObject: any, podUri: string) {
   return updatedFormObject
 }
 
+function existPodUri(podUri: string) {
+  return podUri.includes('http') && podUri && podUri !== ''
+}
+
 /**
  *  Form Model with user data pod
  * @param modelUi
@@ -261,7 +264,6 @@ export async function mapFormModelWithData(
    */
   const fields: any = Object.keys(modelUi[UI.PARTS])
   let newModelUi = modelUi
-
   /**
    * Loop into each fields and find the property into Form Model to
    * match with pod property data
@@ -285,19 +287,14 @@ export async function mapFormModelWithData(
         let result: any
 
         if (fieldObject[UI.VALUES]) {
-          result = podUri && (await data[podUri][property])
-
-          if (result) {
-            parentValue = result.value || ''
-          }
+          result = existPodUri(podUri) && (await data[podUri][property])
+          parentValue = (result && result.value) || ''
         } else {
-          result = podUri && (await data[podUri].type)
-          if (result) {
-            parentValue = result.value || ''
-          }
+          result = existPodUri(podUri) && (await data[podUri].type)
+          parentValue = (result && result.value) || ''
         }
       } else {
-        const field = podUri && (await data[podUri][property])
+        const field = existPodUri(podUri) && (await data[podUri][property])
         parentValue = (field && field.value) || ''
       }
     }
@@ -313,12 +310,13 @@ export async function mapFormModelWithData(
          * Add unique id for parts fields when podUri is empty or not exist.
          */
         let existField = false
-
-        for await (let fieldData of data[podUri][property]) {
-          const { value } = fieldData
-          existField = true
-          childs = await partsFields(childs, { fieldObject, property, podUri, value })
-          childs = getClonePart(childs)
+        if (existPodUri(podUri)) {
+          for await (let fieldData of data[podUri][property]) {
+            const { value } = fieldData
+            existField = true
+            childs = await partsFields(childs, { fieldObject, property, podUri, value })
+            childs = getClonePart(childs)
+          }
         }
 
         if (!existField) {
