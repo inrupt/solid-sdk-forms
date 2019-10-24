@@ -157,10 +157,14 @@ export class ShexFormModel {
     return this.schema.shapes.find((se: any) => se.id === goal)
   }
 
-  findShapeExpressionOptions(id: string) {
+  findShapeExpressionOptions(id: any) {
     let expression = null
-
-    const currentShape = this.findShapeExpression(id)
+    const currentShape = id
+    // const currentShape = this.findShapeExpression(id)
+    /**
+     * If expression is a string will return null
+     */
+    if (typeof currentShape === 'string') return expression
 
     if (currentShape && currentShape.values) {
       const { values } = currentShape
@@ -168,7 +172,7 @@ export class ShexFormModel {
       if (values[0].type && values[0].type.includes('boolean')) {
         return { type: 'BooleanField', default: '0' }
       } else {
-        return { type: 'Classifier', values: values.map((value: any) => value.value) }
+        return { type: 'Classifier', values: values.map((value: any) => value.value || value) }
       }
     }
 
