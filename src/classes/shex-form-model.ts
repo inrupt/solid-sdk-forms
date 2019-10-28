@@ -36,6 +36,37 @@ export class ShexFormModel {
   getSubjectNode(term: string) {
     return namedNode(`#${term}`)
   }
+
+  getFieldType(exp: any = {}) {
+    /**
+     * Check if field has values this mean that will be a Classifier
+     */
+    if (exp.values) {
+      return 'Classifier'
+    }
+    /**
+     * By default if not has dataType we will use text field
+     */
+    if (exp.datatype && !exp.datatype.includes('#')) {
+      return 'SingleLineTextField'
+    }
+
+    /**
+     * Get type from type prefix
+     */
+    const type = exp.datatype && exp.datatype.split('#')[1]
+
+    switch (type) {
+      case 'date':
+        return 'DateField'
+      case 'datetime':
+        return 'DateTimeField'
+      case 'time':
+        return 'TimeField'
+      default:
+        return 'SingleLineTextField'
+    }
+  }
   /**
    * Convert SheEx to Form Model
    */
@@ -59,7 +90,6 @@ export class ShexFormModel {
      * Traverse the shape to create turtle object
      */
     this.walkShape(start, rootFormTerm, this.localName(start.id))
-
     const writer = new Writer({
       prefixes: { '': IRI_this, ui: NS_UI, dc: NS_DC },
       listHeads: this.graph.sequesterLists()
@@ -67,7 +97,6 @@ export class ShexFormModel {
     writer.addQuads(this.graph.getQuads())
     let formModel
     writer.end((error, result) => (formModel = result))
-
     return formModel
   }
   /**
@@ -128,10 +157,14 @@ export class ShexFormModel {
     return this.schema.shapes.find((se: any) => se.id === goal)
   }
 
-  findShapeExpressionOptions(id: string) {
+  findShapeExpressionOptions(id: any) {
     let expression = null
-
-    const currentShape = this.findShapeExpression(id)
+    const currentShape = id
+    // const currentShape = this.findShapeExpression(id)
+    /**
+     * If expression is a string will return null
+     */
+    if (typeof currentShape === 'string') return expression
 
     if (currentShape && currentShape.values) {
       const { values } = currentShape
@@ -139,7 +172,7 @@ export class ShexFormModel {
       if (values[0].type && values[0].type.includes('boolean')) {
         return { type: 'BooleanField', default: '0' }
       } else {
-        return { type: 'Classifier', values: values.map((value: any) => value.value) }
+        return { type: 'Classifier', values: values.map((value: any) => value.value || value) }
       }
     }
 
@@ -201,7 +234,8 @@ export class ShexFormModel {
             'id' in te ? this.jsonLdtoRdf(te.id) : blankNode(`${sanitizedPath}_parts_${i}`)
 
           const optionsType = this.findShapeExpressionOptions(te.valueExpr)
-          let fieldType = te.valueExpr && te.valueExpr.values ? 'Classifier' : 'SingleLineTextField'
+
+          let fieldType = this.getFieldType(te.valueExpr)
 
           if (optionsType) {
             const { type } = optionsType
@@ -239,7 +273,7 @@ export class ShexFormModel {
                 )
                 // add the parts list entry for comment
                 parts.add(commentTerm, `${sanitizedPath}_parts_${i}_comment`)
-              } else if (a.predicate.includes('label')) {
+              } else if (a && a.predicate && a.predicate.includes('label')) {
                 /**
                  * insert one quad into n3 store
                  */

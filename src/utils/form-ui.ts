@@ -37,7 +37,7 @@ function capitalize(word: string) {
  * @param property
  */
 async function findLabel(property: string) {
-  if (property.includes('#')) {
+  if (property && property.includes('#')) {
     // Try to fetch rdfs:label from the vocabulary
     const vocabDoc = getFetchUrl(property.split('#')[0])
     const vocabLabel = await data.from(vocabDoc)[property].label
@@ -58,7 +58,7 @@ async function findLabel(property: string) {
  * @param property
  */
 function getFetchUrl(property: string) {
-  if (property.includes('http://www.w3.org/2006/vcard')) {
+  if (property && property.includes('http://www.w3.org/2006/vcard')) {
     const newUrl = new URL(property)
     return 'https://' + newUrl.hostname + newUrl.pathname
   } else {
@@ -72,6 +72,7 @@ function getFetchUrl(property: string) {
  */
 function getPredicateName(predicate: string): any {
   const prefix = findContext(predicate)
+
   if (predicate.includes('title')) {
     return `${prefix}title`
   }
@@ -108,7 +109,6 @@ async function turtleToFormUi(document: any) {
   const doc = await document
   const partsPath = 'http://www.w3.org/ns/ui#parts'
   const parts: any = await loopList(doc[partsPath])
-
   for await (const field of parts) {
     const subjectKey: string = getPredicateName(field)
     const subjectPrefix = `subject:${subjectKey}`
@@ -158,7 +158,7 @@ async function turtleToFormUi(document: any) {
  * Get the subject prefix
  * @param document
  */
-function subjectPrefix(document: any) {
+function subjectPrefix(document: string) {
   if (document.includes('#')) {
     return `${document.split('#')[0]}#`
   }
@@ -180,7 +180,7 @@ async function partsFields(childs: any, options: any) {
       [uniqueName]: {
         [UI.NAME]: uniqueName,
         [UI.VALUE]: value,
-        ...(await formModel(fieldObject, value, property, podUri))
+        ...(await mapFormModelWithData(fieldObject, value, property, podUri))
       }
     }
   }
@@ -204,16 +204,57 @@ function getClonePart(childs: any) {
 }
 
 /**
+ * Updates the formObject with the new values if something has been updated in the podUri's turtle file
+ * @param formObject
+ * @param podUri
+ */
+export async function mapFormObjectWithData(formObject: any, podUri: string) {
+  let updatedFormObject = { ...formObject }
+  const fields = Object.keys(formObject)
+  // Clearing cache to force the podUri to be requested again
+  await data.clearCache(podUri.split('#')[0])
+
+  /**
+   * Looping into each of the form's updated fields to compare with what the actual data has
+   */
+  for await (const field of fields) {
+    const currentField = formObject[field]
+    let result
+    if (currentField.parent) {
+      result = await data[currentField.parent[UI.VALUE]][currentField[UI.PROPERTY]]
+    } else {
+      result = await data[currentField[UI.BASE]][currentField[UI.PROPERTY]]
+    }
+    updatedFormObject = {
+      ...updatedFormObject,
+      [field]: {
+        ...currentField,
+        [UI.OLDVALUE]: result.value
+      }
+    }
+  }
+
+  return updatedFormObject
+}
+
+function existPodUri(podUri: string) {
+  return podUri.includes('http') && podUri && podUri !== ''
+}
+
+/**
  *  Form Model with user data pod
  * @param modelUi
  * @param podUri
  */
-async function formModel(
+export async function mapFormModelWithData(
   modelUi: any,
   podUri: string,
   parentProperty?: string,
   parentUri?: string
 ) {
+  if (podUri.includes('#') && !parentUri && !parentProperty) {
+    await data.clearCache(podUri.split('#')[0])
+  }
   /**
    * Get fields parts from Form Model
    */
@@ -223,7 +264,6 @@ async function formModel(
    */
   const fields: any = Object.keys(modelUi[UI.PARTS])
   let newModelUi = modelUi
-
   /**
    * Loop into each fields and find the property into Form Model to
    * match with pod property data
@@ -247,20 +287,14 @@ async function formModel(
         let result: any
 
         if (fieldObject[UI.VALUES]) {
-          result = podUri && (await data[podUri][property])
-
-          if (result) {
-            parentValue = result.value || ''
-          }
+          result = existPodUri(podUri) && (await data[podUri][property])
+          parentValue = (result && result.value) || ''
         } else {
-          // property = 'https://www.w99/02/22-rdf-syntax-ns#type'
-          result = podUri && (await data[podUri].type)
-          if (result) {
-            parentValue = result.value || ''
-          }
+          result = existPodUri(podUri) && (await data[podUri].type)
+          parentValue = (result && result.value) || ''
         }
       } else {
-        const field = podUri && (await data[podUri][property])
+        const field = existPodUri(podUri) && (await data[podUri][property])
         parentValue = (field && field.value) || ''
       }
     }
@@ -276,12 +310,13 @@ async function formModel(
          * Add unique id for parts fields when podUri is empty or not exist.
          */
         let existField = false
-
-        for await (let fieldData of data[podUri][property]) {
-          const { value } = fieldData
-          existField = true
-          childs = await partsFields(childs, { fieldObject, property, podUri, value })
-          childs = getClonePart(childs)
+        if (existPodUri(podUri)) {
+          for await (let fieldData of data[podUri][property]) {
+            const { value } = fieldData
+            existField = true
+            childs = await partsFields(childs, { fieldObject, property, podUri, value })
+            childs = getClonePart(childs)
+          }
         }
 
         if (!existField) {
@@ -300,7 +335,7 @@ async function formModel(
         newModelUi = {
           ...parentPro,
           [UI.REFERENCE]: fieldValue,
-          ...(await formModel(fieldObject, podUri))
+          ...(await mapFormModelWithData(fieldObject, podUri))
         }
       }
     }
@@ -315,9 +350,10 @@ async function formModel(
             [UI.VALUE]: parentValue,
             [UI.OLDVALUE]: parentValue,
             [UI.NAME]: uuid(),
-            [UI.BASE]: podUri
+            [UI.BASE]: podUri,
+            [UI.VALID]: true
           }
-        : { [UI.NAME]: uuid(), [UI.BASE]: podUri }
+        : { [UI.NAME]: uuid(), [UI.BASE]: podUri, [UI.VALID]: true }
 
     if (fieldObject[UI.VALUES]) {
       fieldObject = {
@@ -364,7 +400,7 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     [UI.PARTS]: { ...model }
   }
 
-  const modelWidthData = formModel(modelUi, documentPod)
+  const modelWidthData = mapFormModelWithData(modelUi, documentPod)
 
   return modelWidthData
 }
@@ -386,6 +422,6 @@ async function loopList(doc: any) {
 }
 
 export function suffixFromJsonLd(predicate: string, context: any): string {
-  const suffix = predicate.split(':')
+  const suffix = predicate && predicate.split(':')
   return `${context[suffix[0]]}${suffix[1]}`
 }
