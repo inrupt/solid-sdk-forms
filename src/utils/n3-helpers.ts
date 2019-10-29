@@ -4,7 +4,6 @@ import * as N3 from 'n3'
 function changeHostProtocol(from: string) {
   if (from.includes('http')) {
     const protocol = window.location.href.split(':')[0]
-
     return from.replace(/(^\w+:|^)\/\//, `${protocol}://`)
   }
 

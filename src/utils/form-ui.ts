@@ -58,7 +58,7 @@ async function findLabel(property: string) {
  * @param property
  */
 function getFetchUrl(property: string) {
-  if (property && property.includes('http://www.w3.org/2006/vcard')) {
+  if (property && property.includes('http')) {
     const newUrl = new URL(property)
     return 'https://' + newUrl.hostname + newUrl.pathname
   } else {
@@ -90,11 +90,10 @@ function getPredicateName(predicate: string): any {
 
 async function getPropertyValue(field: string, property: string) {
   let propertyProxy: any
-
   const updatedProperty = changeHostProtocol(field)
 
   if (property.includes('ui#values')) {
-    return loopList(data[field][property])
+    return loopList(data.from(updatedProperty)[field][property])
   }
 
   propertyProxy = await data.from(updatedProperty)[field][property]
@@ -105,8 +104,9 @@ async function getPropertyValue(field: string, property: string) {
 function changeHostProtocol(property: string) {
   if (property.includes('http')) {
     const protocol = window.location.href.split(':')[0]
-
-    return property.replace(/(^\w+:|^)\/\//, `${protocol}://`)
+    if (protocol === 'https') {
+      return property.replace(/(^\w+:|^)\/\//, `${protocol}://`)
+    }
   }
 
   return property
