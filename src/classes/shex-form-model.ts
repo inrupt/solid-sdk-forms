@@ -92,7 +92,7 @@ export class ShexFormModel {
     this.walkShape(start, rootFormTerm, this.localName(start.id))
     const writer = new Writer({
       prefixes: { '': IRI_this, ui: NS_UI, dc: NS_DC },
-      listHeads: this.graph.sequesterLists()
+      lists: this.graph.extractLists({ remove: true })
     })
     writer.addQuads(this.graph.getQuads())
     let formModel
