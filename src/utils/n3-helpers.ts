@@ -1,8 +1,19 @@
 import { fetchSchema } from './solid-fetch'
 import * as N3 from 'n3'
 
+function changeHostProtocol(from: string) {
+  if (from.includes('http')) {
+    const protocol = window.location.href.split(':')[0]
+
+    return from.replace(/(^\w+:|^)\/\//, `${protocol}://`)
+  }
+
+  return from
+}
+
 export async function getClassifierOptions(from: string) {
-  const document = from ? await fetchSchema(from) : null
+  const updatedFrom = changeHostProtocol(from)
+  const document = updatedFrom ? await fetchSchema(updatedFrom) : null
   let options: any = []
 
   if (document) {

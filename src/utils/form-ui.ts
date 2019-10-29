@@ -91,12 +91,25 @@ function getPredicateName(predicate: string): any {
 async function getPropertyValue(field: string, property: string) {
   let propertyProxy: any
 
+  const updatedProperty = changeHostProtocol(field)
+
   if (property.includes('ui#values')) {
     return loopList(data[field][property])
   }
-  propertyProxy = await data[field][property]
+
+  propertyProxy = await data.from(updatedProperty)[field][property]
 
   return propertyProxy && propertyProxy.value
+}
+
+function changeHostProtocol(property: string) {
+  if (property.includes('http')) {
+    const protocol = window.location.href.split(':')[0]
+
+    return property.replace(/(^\w+:|^)\/\//, `${protocol}://`)
+  }
+
+  return property
 }
 
 /**
@@ -112,11 +125,9 @@ async function turtleToFormUi(document: any) {
   for await (const field of parts) {
     const subjectKey: string = getPredicateName(field)
     const subjectPrefix = `subject:${subjectKey}`
-
     for await (const property of data[field].properties) {
       let partsFields: any = {}
       let propertyValue: string = await getPropertyValue(field, property)
-
       /**
        * If property exist into the subject we added it into the json-ld object
        */
@@ -125,6 +136,7 @@ async function turtleToFormUi(document: any) {
       }
 
       const propertyKey: string = getPredicateName(property)
+
       let newField = {
         [subjectPrefix]: {
           ...fields[subjectPrefix],
@@ -220,6 +232,7 @@ export async function mapFormObjectWithData(formObject: any, podUri: string) {
   for await (const field of fields) {
     const currentField = formObject[field]
     let result
+
     if (currentField.parent) {
       result = await data[currentField.parent[UI.VALUE]][currentField[UI.PROPERTY]]
     } else {
@@ -283,18 +296,19 @@ export async function mapFormModelWithData(
      * parts
      */
     if (property) {
+      const newProperty = property.replace(/(^\w+:|^)\/\//, `http://`)
       if (fieldObject['rdf:type'].includes('Classifier')) {
         let result: any
 
         if (fieldObject[UI.VALUES]) {
-          result = existPodUri(podUri) && (await data[podUri][property])
+          result = existPodUri(podUri) && (await data[podUri][newProperty])
           parentValue = (result && result.value) || ''
         } else {
           result = existPodUri(podUri) && (await data[podUri].type)
           parentValue = (result && result.value) || ''
         }
       } else {
-        const field = existPodUri(podUri) && (await data[podUri][property])
+        const field = existPodUri(podUri) && (await data[podUri][newProperty])
         parentValue = (field && field.value) || ''
       }
     }
@@ -399,7 +413,6 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     },
     [UI.PARTS]: { ...model }
   }
-
   const modelWidthData = mapFormModelWithData(modelUi, documentPod)
 
   return modelWidthData
