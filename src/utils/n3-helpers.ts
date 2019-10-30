@@ -21,7 +21,7 @@ export async function getClassifierOptions(from: string) {
       new N3.Parser().parse(document, (error, triple) => {
         if (triple) {
           const currentType = triple.object.id.includes('#') ? triple.object.id.split('#')[1] : null
-          if (currentType === 'Type' || currentType === 'Class') {
+          if (currentType === 'Type') {
             const value = triple.subject.id
             options = [...options, value]
           }
