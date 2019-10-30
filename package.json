@@ -1,6 +1,6 @@
 {
   "name": "solid-forms",
-  "version": "0.0.33-test",
+  "version": "0.0.35-test",
   "description": "",
   "keywords": [],
   "main": "dist/solid-forms.umd.js",
@@ -88,11 +88,9 @@
       "@commitlint/config-conventional"
     ]
   },
-  "peerDependencies": {
-    "moment": "^2.24.0",
-    "moment-timezone": "^0.5.27"
-  },
   "devDependencies": {
+    "moment": "^2.24.0",
+    "moment-timezone": "^0.5.27",
     "@commitlint/cli": "^7.1.2",
     "@commitlint/config-conventional": "^7.1.2",
     "@shexjs/core": "^1.0.0-alpha.4",
