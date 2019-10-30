@@ -1,4 +1,5 @@
 import moment from 'moment'
+
 import { UI } from '@constants'
 
 const actionMethod = (condition: boolean, message: string) => {
