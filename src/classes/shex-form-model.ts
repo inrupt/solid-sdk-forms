@@ -159,7 +159,8 @@ export class ShexFormModel {
 
   findShapeExpressionOptions(id: any) {
     let expression = null
-    // const currentShape = id
+    //const currentShape = id
+
     const currentShape = typeof id === 'string' ? this.findShapeExpression(id) : id
     /**
      * If expression is a string will return null

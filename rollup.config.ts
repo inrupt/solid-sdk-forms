@@ -16,7 +16,7 @@ const libraryName = 'solid-forms'
 
 export default {
   input: `src/${libraryName}.ts`,
-  external: ['@solid/query-ldflex', '@shexjs/parser', '@shexjs/core'],
+  external: ['@solid/query-ldflex', '@shexjs/parser', '@shexjs/core', 'moment'],
   output: [
     { file: pkg.main, name: camelCase(libraryName), format: 'umd', sourcemap: false },
     { file: pkg.module, format: 'es', sourcemap: false },
@@ -37,7 +37,8 @@ export default {
     typescript({ useTsconfigDeclarationDir: true, objectHashIgnoreUnknownHack: true, clean: true }),
     // Allow bundling cjs modules (unlike webpack, rollup doesn't understand cjs)
     commonjs({
-      exclude: './node_modules/**', 
+      // exclude: './node_modules/**',
+      include: 'node_modules/**', 
       namedExports: {
       'node_modules/@solid/query-ldflex/dist/solid-query-ldflex.bundle.js': [ 'data' ],
       'node_modules/@shexjs/parser/shex-parser.js': ['shexParser'],
