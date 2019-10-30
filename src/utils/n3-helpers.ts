@@ -12,6 +12,7 @@ function changeHostProtocol(from: string) {
 
 export async function getClassifierOptions(from: string) {
   const updatedFrom = changeHostProtocol(from)
+  const type = from.includes('#') ? from.split('#')[1] : 'Type'
   const document = updatedFrom ? await fetchSchema(updatedFrom) : null
   let options: any = []
 
@@ -21,7 +22,7 @@ export async function getClassifierOptions(from: string) {
       new N3.Parser().parse(document, (error, triple) => {
         if (triple) {
           const currentType = triple.object.id.includes('#') ? triple.object.id.split('#')[1] : null
-          if (currentType === 'Type') {
+          if (currentType === type) {
             const value = triple.subject.id
             options = [...options, value]
           }
