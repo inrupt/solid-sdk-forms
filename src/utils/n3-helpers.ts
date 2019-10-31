@@ -1,4 +1,5 @@
 import { fetchSchema } from './solid-fetch'
+import data from '@solid/query-ldflex'
 import * as N3 from 'n3'
 
 function changeHostProtocol(from: string) {
@@ -10,27 +11,48 @@ function changeHostProtocol(from: string) {
   return from
 }
 
+function getLabel(label: any) {
+  const cleanLabel = label.includes('@') ? label.split('@')[0] : label
+  return cleanLabel.replace(/[^\w\s]/gi, '')
+}
+
 export async function getClassifierOptions(from: string) {
   const updatedFrom = changeHostProtocol(from)
+  const type = from.includes('#') ? from.split('#')[1] : 'Type'
   const document = updatedFrom ? await fetchSchema(updatedFrom) : null
   let options: any = []
 
   if (document) {
-    const optionsPromise = new Promise((resolve, reject) => {
-      let options: string[] = []
+    const optionsPromise = new Promise(async (resolve, reject) => {
+      let quads: any = {}
       new N3.Parser().parse(document, (error, triple) => {
         if (triple) {
-          const currentType = triple.object.id.includes('#') ? triple.object.id.split('#')[1] : null
-          if (currentType === 'Type' || currentType === 'Class') {
-            const value = triple.subject.id
-            options = [...options, value]
+          quads = {
+            ...quads,
+            [triple.subject.id]: {
+              ...quads[triple.subject.id],
+              [triple.predicate.id]: triple.object.id
+            }
           }
         } else {
-          resolve(options)
+          resolve(quads)
         }
       })
     })
-    options = await optionsPromise
+    const quads: any = await optionsPromise
+
+    for (let quad in quads) {
+      const deprecated = quads[quad]['http://www.w3.org/2002/07/owl#deprecated']
+      const label = quads[quad]['http://www.w3.org/2000/01/rdf-schema#label']
+      const currentType = quads[quad]['http://www.w3.org/2000/01/rdf-schema#subClassOf']
+      if (
+        (!deprecated || deprecated.includes('false')) &&
+        label &&
+        (currentType && currentType.includes(type))
+      ) {
+        options = [...options, getLabel(label)]
+      }
+    }
     return options.length === 0 ? ['No Options'] : options
   }
 
