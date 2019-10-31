@@ -44,11 +44,15 @@ export async function getClassifierOptions(from: string) {
     for (let quad in quads) {
       const deprecated = quads[quad]['http://www.w3.org/2002/07/owl#deprecated']
       const label = quads[quad]['http://www.w3.org/2000/01/rdf-schema#label']
-      const currentType = quads[quad]['http://www.w3.org/2000/01/rdf-schema#subClassOf']
+      const currentPredicateType = quads[quad]['http://www.w3.org/2000/01/rdf-schema#subClassOf']
+      const currentType =
+        currentPredicateType && currentPredicateType.includes('#')
+          ? currentPredicateType.split('#')[1]
+          : currentPredicateType
       if (
         (!deprecated || deprecated.includes('false')) &&
         label &&
-        (currentType && currentType.includes(type))
+        (currentType && currentType === type)
       ) {
         options = [...options, getLabel(label)]
       }
