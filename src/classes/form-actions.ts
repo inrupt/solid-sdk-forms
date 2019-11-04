@@ -121,6 +121,8 @@ export class FormActions {
               await podData.add(updatedValue)
             }
           }
+        } else {
+          throw new Error('Validation failed')
         }
         /**
          * Update ui:value and  ui:oldValue on formModel and reset formObject
