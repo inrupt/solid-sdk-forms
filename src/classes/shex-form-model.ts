@@ -246,7 +246,7 @@ export class ShexFormModel {
           let needFieldType = namedNode(NS_UI + fieldType)
 
           // copy annotations
-          if ('annotations' in te)
+          if ('annotations' in te) {
             te.annotations.forEach((a: any) => {
               if (a.predicate === `${NS_LAYOUT}ref`) {
                 return
@@ -294,6 +294,7 @@ export class ShexFormModel {
                 )
               }
             })
+          }
 
           // add the parts list entry for new field
           parts.add(`#_:${sanitizedPath}_parts_${i}`)
@@ -343,7 +344,7 @@ export class ShexFormModel {
 
             if ('pattern' in nc) {
               graph.addQuad(
-                fieldTerm,
+                this.getSubjectNode(fieldTerm.id),
                 namedNode(`${NS_UI}pattern`),
                 this.jsonLdtoRdf({ value: nc.pattern })
               )
