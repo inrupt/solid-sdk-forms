@@ -336,7 +336,7 @@ export class ShexFormModel {
             let nc = valueExpr
             if ('maxlength' in nc) {
               graph.addQuad(
-                fieldTerm,
+                this.getSubjectNode(fieldTerm.id),
                 namedNode(`${NS_UI}maxLength`),
                 this.jsonLdtoRdf({ value: nc.maxlength })
               )

@@ -1,6 +1,6 @@
 {
   "name": "solid-forms",
-  "version": "0.0.37-test",
+  "version": "0.0.38-test",
   "description": "",
   "keywords": [],
   "main": "dist/solid-forms.umd.js",
