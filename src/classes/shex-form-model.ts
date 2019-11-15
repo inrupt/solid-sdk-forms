@@ -64,7 +64,12 @@ export class ShexFormModel {
       case 'time':
         return 'TimeField'
       default:
-        return 'SingleLineTextField'
+        // If we have a text field, with a maxlength of a certain value, change to a textarea
+        if (exp.maxlength && exp.maxlength > 100) {
+          return 'MultiLineTextField'
+        } else {
+          return 'SingleLineTextField'
+        }
     }
   }
   /**
