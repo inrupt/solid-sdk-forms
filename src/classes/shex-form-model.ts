@@ -63,6 +63,8 @@ export class ShexFormModel {
         return 'DateTimeField'
       case 'time':
         return 'TimeField'
+      case 'boolean':
+        return 'BooleanField'
       default:
         // If we have a text field, with a maxlength of a certain value, change to a textarea
         if (exp.maxlength && exp.maxlength > 100) {
@@ -80,11 +82,11 @@ export class ShexFormModel {
       schema,
       termFactory: { namedNode, blankNode, literal }
     } = this
-    const IRI_this = '#'
+    const IRI_THIS = '#'
     /**
      * Get root for term into ShexEx
      */
-    const rootFormTerm = namedNode(`${IRI_this}formRoot`)
+    const rootFormTerm = namedNode(`${IRI_THIS}formRoot`)
     /**
      * Find ShEx expression
      */
@@ -96,11 +98,12 @@ export class ShexFormModel {
      */
     this.walkShape(start, rootFormTerm, this.localName(start.id))
     const writer = new Writer({
-      prefixes: { '': IRI_this, ui: NS_UI, dc: NS_DC },
+      prefixes: { '': IRI_THIS, ui: NS_UI, dc: NS_DC },
       lists: this.graph.extractLists({ remove: true })
     })
     writer.addQuads(this.graph.getQuads())
     let formModel
+    // tslint:disable-next-line:handle-callback-err
     writer.end((error, result) => (formModel = result))
     return formModel
   }
@@ -162,27 +165,27 @@ export class ShexFormModel {
     return this.schema.shapes.find((se: any) => se.id === goal)
   }
 
-  findShapeExpressionOptions(id: any) {
-    let expression = null
-    //const currentShape = id
-
-    const currentShape = typeof id === 'string' ? this.findShapeExpression(id) : id
+  /**
+   * Checks if the expression is a Classifier (a dropdown)
+   * @param expression
+   */
+  findShapeExpressionOptions(expression: any) {
     /**
-     * If expression is a string will return null
+     * In case it is not a Classifies it will ignore it
      */
-    if (typeof currentShape === 'string') return expression
-
-    if (currentShape && currentShape.values) {
-      const { values } = currentShape
-
-      if (values[0].type && values[0].type.includes('boolean')) {
-        return { type: 'BooleanField', default: '0' }
-      } else {
-        return { type: 'Classifier', values: values.map((value: any) => value.value || value) }
-      }
+    if (typeof expression === 'string' && typeof this.findShapeExpression(expression) === 'string') {
+      return null;
     }
 
-    return expression
+    /**
+     * Validates the {values} field in the expression to confirm it is a Classifier/dropdown
+     */
+    if (expression && expression.values) {
+      const { values } = expression;
+      return { type: 'Classifier', values: values.map((value: any) => value.value || value) };
+    }
+
+    return null;
   }
 
   /**
@@ -190,9 +193,7 @@ export class ShexFormModel {
    * @param shape
    * @param formTerm
    * @param path
-   * @param namedNode
-   * @param literal
-   * @param blankNode
+   * @param isGroup
    */
   walkShape(shape: any, formTerm: any, path: string, isGroup: boolean = false) {
     try {
