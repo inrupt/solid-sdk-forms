@@ -56,5 +56,7 @@ export const UI = {
   MAX_VALUE: 'ui:maxValue',
   MIN_DATE_OFFSET: 'ui:mindateOffset',
   MAX_DATE_OFFSET: 'ui:maxdateOffset',
+  MAX_DATE_TIME_OFFSET: 'ui:maxdatetimeOffset',
+  MIN_DATE_TIME_OFFSET: 'ui:mindatetimeOffset',
   DEFAULT_ERROR: 'ui:defaultError'
 }
