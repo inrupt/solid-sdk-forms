@@ -65,6 +65,14 @@ export class ShexFormModel {
         return 'TimeField'
       case 'boolean':
         return 'BooleanField'
+      case 'integer':
+        return 'IntegerField'
+      case 'decimal':
+        return 'DecimalField'
+      case 'float':
+        return 'FloatField'
+      case 'double':
+        return 'DoubleField'
       default:
         // If we have a text field, with a maxlength of a certain value, change to a textarea
         if (exp.maxlength && exp.maxlength > 100) {
@@ -150,7 +158,7 @@ export class ShexFormModel {
     }
     const ret = this.findShapeExpression(shapeExpr)
     if (!ret) {
-      throw Error(`unable to find shape expression "${shapeExpr}" in 
+      throw Error(`unable to find shape expression "${shapeExpr}" in
             ${this.schema.shapes.map((se: any) => se.id).join('\n')}`)
     }
     return ret
@@ -173,19 +181,22 @@ export class ShexFormModel {
     /**
      * In case it is not a Classifies it will ignore it
      */
-    if (typeof expression === 'string' && typeof this.findShapeExpression(expression) === 'string') {
-      return null;
+    if (
+      typeof expression === 'string' &&
+      typeof this.findShapeExpression(expression) === 'string'
+    ) {
+      return null
     }
 
     /**
      * Validates the {values} field in the expression to confirm it is a Classifier/dropdown
      */
     if (expression && expression.values) {
-      const { values } = expression;
-      return { type: 'Classifier', values: values.map((value: any) => value.value || value) };
+      const { values } = expression
+      return { type: 'Classifier', values: values.map((value: any) => value.value || value) }
     }
 
-    return null;
+    return null
   }
 
   /**
