@@ -73,5 +73,27 @@ export const validators = [
         moment(field.value).isBefore(moment().add(field[UI.MAX_DATE_OFFSET], 'd')),
         field[UI.VALIDATION_ERROR]
       )
+  },
+  {
+    name: UI.MIN_DATE_TIME_OFFSET,
+    action: (field: any) => {
+      if (field[UI.MIN_VALUE]) return actionMethod(true, 'Skipped validation')
+
+      return actionMethod(
+        moment(field.value).isAfter(moment().subtract(field[UI.MIN_DATE_TIME_OFFSET], 'seconds')),
+        field[UI.VALIDATION_ERROR]
+      )
+    }
+  },
+  {
+    name: UI.MAX_DATE_TIME_OFFSET,
+    action: (field: any) => {
+      if (field[UI.MAX_VALUE]) return actionMethod(true, 'Skipped validation')
+
+      return actionMethod(
+        moment(field.value).isBefore(moment().add(field[UI.MAX_DATE_TIME_OFFSET], 'seconds')),
+        field[UI.VALIDATION_ERROR]
+      )
+    }
   }
 ]
