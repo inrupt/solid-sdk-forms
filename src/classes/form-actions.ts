@@ -59,18 +59,22 @@ export class FormActions {
   validator = (field: any) => {
     let updatedField = { ...field, [UI.VALID]: true }
 
-    for (const currentValidator of validator.validators) {
-      if (Object.keys(field).find(key => key === currentValidator.name)) {
-        const { valid, errorMessage } = currentValidator.action(field)
-        if (!valid) {
-          updatedField = {
-            ...updatedField,
-            [UI.VALID]: valid,
-            [UI.DEFAULT_ERROR]: errorMessage
+    try {
+      for (const currentValidator of validator.validators) {
+        if (Object.keys(field).find(key => key === currentValidator.name)) {
+          const { valid, errorMessage } = currentValidator.action(field)
+          if (!valid) {
+            updatedField = {
+              ...updatedField,
+              [UI.VALID]: valid,
+              [UI.DEFAULT_ERROR]: errorMessage
+            }
+            break
           }
-          break
         }
       }
+    } catch (error) {
+      throw Error(error)
     }
 
     return updatedField
