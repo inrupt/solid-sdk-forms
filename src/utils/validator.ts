@@ -42,7 +42,7 @@ export const validators = [
         )
       }
 
-      return actionMethod(field.value >= field[UI.MIN_VALUE], field[UI.VALIDATION_ERROR])
+      return actionMethod(+field.value >= +field[UI.MIN_VALUE], field[UI.VALIDATION_ERROR])
     }
   },
   {
@@ -55,7 +55,7 @@ export const validators = [
         )
       }
 
-      return actionMethod(field.value <= field[UI.MAX_VALUE], field[UI.VALIDATION_ERROR])
+      return actionMethod(+field.value <= +field[UI.MAX_VALUE], field[UI.VALIDATION_ERROR])
     }
   },
   {
