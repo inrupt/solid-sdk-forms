@@ -72,7 +72,29 @@ export class ShexFormModel {
       case 'float':
         return 'FloatField'
       case 'double':
-        return 'DoubleField'
+        return 'FloatField'
+      case 'nonPositiveInteger':
+        return 'IntegerField'
+      case 'negativeInteger':
+        return 'IntegerField'
+      case 'long':
+        return 'IntegerField'
+      case 'short':
+        return 'IntegerField'
+      case 'byte':
+        return 'IntegerField'
+      case 'nonNegativeInteger':
+        return 'IntegerField'
+      case 'unsignedLong':
+        return 'IntegerField'
+      case 'unsignedInt':
+        return 'IntegerField'
+      case 'unsignedShort':
+        return 'IntegerField'
+      case 'unsignedByte':
+        return 'IntegerField'
+      case 'positiveInteger':
+        return 'IntegerField'
       default:
         // If we have a text field, with a maxlength of a certain value, change to a textarea
         if (exp.maxlength && exp.maxlength > 100) {
