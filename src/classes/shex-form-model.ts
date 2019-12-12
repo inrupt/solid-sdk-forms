@@ -363,7 +363,7 @@ export class ShexFormModel {
              */
             const groupParts = new ListObject(
               `#${fieldTerm.id}`,
-              namedNode(`${NS_UI}parts`),
+              namedNode(`${NS_UI}part`),
               graph,
               this.termFactory
             )
