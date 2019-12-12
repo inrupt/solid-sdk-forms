@@ -42,6 +42,21 @@ export const validators = [
         )
       }
 
+      if (field['rdf:type'] === 'ui:TimeField') {
+        const [hour, minute, second] = field.value.split(':').map(v => Number(v))
+        const [minHour, minMinute, minSecond] = field[UI.MIN_VALUE].split(':').map(v => Number(v))
+
+        const baseTime = new Date()
+        const fieldTime = moment(baseTime).set({ hour, minute, second })
+        const maxTime = moment(baseTime).set({
+          hour: minHour,
+          minute: minMinute,
+          second: minSecond
+        })
+
+        return actionMethod(fieldTime.isAfter(maxTime), field[UI.VALIDATION_ERROR])
+      }
+
       return actionMethod(
         Number(field.value) >= Number(field[UI.MIN_VALUE]),
         field[UI.VALIDATION_ERROR]
@@ -56,6 +71,21 @@ export const validators = [
           moment(field.value).isBefore(moment(field[UI.MAX_VALUE])),
           field[UI.VALIDATION_ERROR]
         )
+      }
+
+      if (field['rdf:type'] === 'ui:TimeField') {
+        const [hour, minute, second] = field.value.split(':').map(v => Number(v))
+        const [maxHour, maxMinute, maxSecond] = field[UI.MAX_VALUE].split(':').map(v => Number(v))
+
+        const baseTime = new Date()
+        const fieldTime = moment(baseTime).set({ hour, minute, second })
+        const maxTime = moment(baseTime).set({
+          hour: maxHour,
+          minute: maxMinute,
+          second: maxSecond
+        })
+
+        return actionMethod(fieldTime.isBefore(maxTime), field[UI.VALIDATION_ERROR])
       }
 
       return actionMethod(
