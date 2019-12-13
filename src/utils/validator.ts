@@ -1,6 +1,6 @@
 import moment from 'moment'
 
-import { UI } from '@constants'
+import { UI, NS } from '@constants'
 
 const actionMethod = (condition: boolean, message: string) => {
   return {
@@ -42,7 +42,7 @@ export const validators = [
         )
       }
 
-      if (field['rdf:type'] === 'ui:TimeField') {
+      if (field['rdf:type'] === NS.UI.TimeField) {
         const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
         const [minHour, minMinute, minSecond] = field[UI.MIN_VALUE]
           .split(':')
@@ -74,8 +74,7 @@ export const validators = [
           field[UI.VALIDATION_ERROR]
         )
       }
-
-      if (field['rdf:type'] === 'ui:TimeField') {
+      if (field['rdf:type'] === NS.UI.TimeField) {
         const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
         const [maxHour, maxMinute, maxSecond] = field[UI.MAX_VALUE]
           .split(':')
