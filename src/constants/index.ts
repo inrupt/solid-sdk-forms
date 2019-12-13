@@ -60,3 +60,10 @@ export const UI = {
   MIN_DATE_TIME_OFFSET: 'ui:mindatetimeOffset',
   DEFAULT_ERROR: 'ui:defaultError'
 }
+
+const nsBase = 'http://www.w3.org/ns/ui#'
+export const NS = {
+  UI: {
+    TimeField: `${nsBase}TimeField`
+  }
+}
