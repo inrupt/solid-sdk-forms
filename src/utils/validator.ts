@@ -43,8 +43,10 @@ export const validators = [
       }
 
       if (field['rdf:type'] === 'ui:TimeField') {
-        const [hour, minute, second] = field.value.split(':').map(v => Number(v))
-        const [minHour, minMinute, minSecond] = field[UI.MIN_VALUE].split(':').map(v => Number(v))
+        const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
+        const [minHour, minMinute, minSecond] = field[UI.MIN_VALUE]
+          .split(':')
+          .map((v: string) => Number(v))
 
         const baseTime = new Date()
         const fieldTime = moment(baseTime).set({ hour, minute, second })
@@ -74,8 +76,10 @@ export const validators = [
       }
 
       if (field['rdf:type'] === 'ui:TimeField') {
-        const [hour, minute, second] = field.value.split(':').map(v => Number(v))
-        const [maxHour, maxMinute, maxSecond] = field[UI.MAX_VALUE].split(':').map(v => Number(v))
+        const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
+        const [maxHour, maxMinute, maxSecond] = field[UI.MAX_VALUE]
+          .split(':')
+          .map((v: string) => Number(v))
 
         const baseTime = new Date()
         const fieldTime = moment(baseTime).set({ hour, minute, second })
