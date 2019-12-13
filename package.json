@@ -1,6 +1,6 @@
 {
   "name": "@inrupt/solid-sdk-forms",
-  "version": "0.1.0-rc.0",
+  "version": "0.1.0-dev.0",
   "homepage": "https://solidproject.org",
   "description": "Solid library for converting and generating Forms",
   "keywords": [],
