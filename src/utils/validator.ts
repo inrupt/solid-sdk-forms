@@ -37,7 +37,7 @@ export const validators = [
     action: (field: any) => {
       if (field['rdf:type'].includes('Date')) {
         return actionMethod(
-          moment(field.value).isAfter(moment(field[UI.MIN_VALUE])),
+          moment(field.value).isSameOrAfter(moment(field[UI.MIN_VALUE])),
           field[UI.VALIDATION_ERROR]
         )
       }
@@ -56,7 +56,7 @@ export const validators = [
           second: minSecond
         })
 
-        return actionMethod(fieldTime.isAfter(maxTime), field[UI.VALIDATION_ERROR])
+        return actionMethod(fieldTime.isSameOrAfter(maxTime), field[UI.VALIDATION_ERROR])
       }
 
       return actionMethod(
@@ -70,7 +70,7 @@ export const validators = [
     action: (field: any) => {
       if (field['rdf:type'].includes('Date')) {
         return actionMethod(
-          moment(field.value).isBefore(moment(field[UI.MAX_VALUE])),
+          moment(field.value).isSameOrBefore(moment(field[UI.MAX_VALUE])),
           field[UI.VALIDATION_ERROR]
         )
       }
@@ -88,7 +88,7 @@ export const validators = [
           second: maxSecond
         })
 
-        return actionMethod(fieldTime.isBefore(maxTime), field[UI.VALIDATION_ERROR])
+        return actionMethod(fieldTime.isSameOrBefore(maxTime), field[UI.VALIDATION_ERROR])
       }
 
       return actionMethod(
