@@ -1,29 +1,40 @@
-# SOLID FORMS
+# Solid SDK Forms
 
 <img src="https://solid.inrupt.com/themes/custom/solid/logo.svg" width="150" height="150">
 
-Solid Form project to handle forms using ShEx and SHACL.
+This is a standalone Typescript library designed to handle form conversion and other form-related features.
 
-### Features
+*NOTE*: This library is still a work in progress. We are using lessons learned while building the library to improve the code and structure.
 
- - Build form using ShEx
- - Build form using SHACL
+## Installation
 
-### NPM scripts
+To install, simply run the command
 
- - `npm t`: Run test suite
- - `npm start`: Run `npm run build` in watch mode
- - `npm run test:watch`: Run test suite in [interactive watch mode](http://facebook.github.io/jest/docs/cli.html#watch)
- - `npm run test:prod`: Run linting and generate coverage
- - `npm run build`: Generate bundles and typings, create docs
- - `npm run lint`: Lints code
- - `npm run commit`: Commit using conventional commit style ([husky](https://github.com/typicode/husky) will tell you to use it if you haven't :wink:)
+`npm install --save @inrupt/solid-sdk-forms`
 
-For a library, `core-js` plays very nicely, since you can import just the polyfills you need:
+## Usage
+
+There are a few things you can do with this library. The first and most common usage will be converting a shape to a Form Model object.
+
+This can be done with the following code:
 
 ```javascript
-import "core-js/fn/array/find"
-import "core-js/fn/string/includes"
-import "core-js/fn/promise"
-...
+import { ShexFormModel, FormModel } from '@inrupt/solid-sdk-forms';
+
+const formModel = new FormModel();
+const schema = await formModel.parseSchema(schemaUrl);
+const shexClass = new ShexFormModel(schema);
+const formModelOutput = shexClass.convert();
 ```
+
+In this example, we are given a schemaUrl (hardcoded or fetched, whichever you prefer) and use the new FormModel class to convert it. The breakdown is as follows:
+
+#### FormModel.parseSchema
+This function fetches and parses the ShEx schema and returns it. This can be in ShExC, ShExR, or ShExJ format.
+
+#### ShexFormModel.convert
+This function, belonging to the ShexFormModel class, does the actual conversion from a ShEx schema to a FormModel object. It does this by the following high level steps:
+
+1. Find the `start` shape of the schema. This is the shape in the schema that represents the "beginning" of the shape. If one does not exist, we take the first shape in the array. This is very important when a schema file has multiple shapes in the same file.
+2. Traverse the shape recursively, to build out a Form Model. This will walk the whole schema, including nested and linked shapes, and build out the form model from each expression in each shape. During traversal it detects things like annotations, constraints, and data types to make "best guesses" as to which piece of the form model it maps to. The output is currently a string representation of a ttl file that can be copied/uploaded to a pod.
+
