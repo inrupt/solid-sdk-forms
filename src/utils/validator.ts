@@ -1,6 +1,6 @@
 import moment from 'moment'
 
-import { UI } from '@constants'
+import { UI, NS } from '@constants'
 
 const actionMethod = (condition: boolean, message: string) => {
   return {
@@ -37,9 +37,26 @@ export const validators = [
     action: (field: any) => {
       if (field['rdf:type'].includes('Date')) {
         return actionMethod(
-          moment(field.value).isAfter(moment(field[UI.MIN_VALUE])),
+          moment(field.value).isSameOrAfter(moment(field[UI.MIN_VALUE])),
           field[UI.VALIDATION_ERROR]
         )
+      }
+
+      if (field['rdf:type'] === NS.UI.TimeField) {
+        const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
+        const [minHour, minMinute, minSecond] = field[UI.MIN_VALUE]
+          .split(':')
+          .map((v: string) => Number(v))
+
+        const baseTime = new Date()
+        const fieldTime = moment(baseTime).set({ hour, minute, second })
+        const maxTime = moment(baseTime).set({
+          hour: minHour,
+          minute: minMinute,
+          second: minSecond
+        })
+
+        return actionMethod(fieldTime.isSameOrAfter(maxTime), field[UI.VALIDATION_ERROR])
       }
 
       return actionMethod(
@@ -53,9 +70,25 @@ export const validators = [
     action: (field: any) => {
       if (field['rdf:type'].includes('Date')) {
         return actionMethod(
-          moment(field.value).isBefore(moment(field[UI.MAX_VALUE])),
+          moment(field.value).isSameOrBefore(moment(field[UI.MAX_VALUE])),
           field[UI.VALIDATION_ERROR]
         )
+      }
+      if (field['rdf:type'] === NS.UI.TimeField) {
+        const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
+        const [maxHour, maxMinute, maxSecond] = field[UI.MAX_VALUE]
+          .split(':')
+          .map((v: string) => Number(v))
+
+        const baseTime = new Date()
+        const fieldTime = moment(baseTime).set({ hour, minute, second })
+        const maxTime = moment(baseTime).set({
+          hour: maxHour,
+          minute: maxMinute,
+          second: maxSecond
+        })
+
+        return actionMethod(fieldTime.isSameOrBefore(maxTime), field[UI.VALIDATION_ERROR])
       }
 
       return actionMethod(
