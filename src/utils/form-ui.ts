@@ -121,7 +121,16 @@ async function turtleToFormUi(document: any) {
   let fields: any = {}
   const doc = await document
   const partsPath = 'http://www.w3.org/ns/ui#parts'
-  const parts: any = await loopList(doc[partsPath])
+  const partPath = 'http://www.w3.org/ns/ui#part'
+  let parts
+  const part = await doc[partPath]
+
+  if (!part) {
+    parts = await loopList(doc[partsPath])
+  } else {
+    parts = await [part.value]
+  }
+
   for await (const field of parts) {
     const subjectKey: string = getPredicateName(field)
     const subjectPrefix = `subject:${subjectKey}`
@@ -131,7 +140,9 @@ async function turtleToFormUi(document: any) {
       /**
        * If property exist into the subject we added it into the json-ld object
        */
-      if (property.includes('parts') && propertyValue) {
+      if (property === partsPath && propertyValue) {
+        partsFields = await turtleToFormUi(data[field])
+      } else if (property === partPath) {
         partsFields = await turtleToFormUi(data[field])
       }
 
@@ -405,6 +416,7 @@ export async function mapFormModelWithData(
  */
 export async function convertFormModel(documentUri: any, documentPod: any) {
   const model = await turtleToFormUi(data[documentUri])
+  console.log('model', model)
   let modelUi = {
     '@context': {
       ...CONTEXT['@context'],
