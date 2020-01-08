@@ -7,7 +7,8 @@ import {
   IRI_XsdString,
   TRIPLE_CONSTRAINT,
   EACH_OF,
-  NODE_CONSTRAINT
+  NODE_CONSTRAINT,
+  CONSTRAINS
 } from '@constants'
 import { Meta } from '@interfaces'
 import { ListObject } from './list-object'
@@ -35,6 +36,51 @@ export class ShexFormModel {
 
   getSubjectNode(term: string) {
     return namedNode(`#${term}`)
+  }
+
+  /**
+   * Add the right constrain depending on the expression DataType or Explicit constrain.
+   * We are using the CONSTANTS to get the right constrain.
+   * @param fieldTerm to pass the right ID to the node.
+   * @param exp Expression to get the Explicit Constrain.
+   * @returns This Function does not have any returns it adds the UI Constrain or not.
+   */
+  getNumberConstrain(exp: any = {}, fieldTerm: any) {
+    const type = exp.datatype && exp.datatype.split('#')[1]
+    let maxValue: number
+    let minValue: number
+
+    /**
+     * Find if there is an Explicit constrain or not.
+     */
+    if (exp.mininclusive || exp.maxinclusive) {
+      maxValue = exp.maxinclusive && exp.maxinclusive
+      minValue = exp.mininclusive && exp.mininclusive
+    } else {
+      maxValue =
+        CONSTRAINS[`${type}`] && CONSTRAINS[`${type}`].maxValue && +CONSTRAINS[`${type}`].maxValue
+      minValue =
+        CONSTRAINS[`${type}`] && CONSTRAINS[`${type}`].minValue && +CONSTRAINS[`${type}`].minValue
+    }
+
+    /**
+     * Check if there is a number or undefined to add or not the UI:Constrain.
+     * The value can be 0
+     */
+    isNaN(maxValue)
+      ? false
+      : this.graph.addQuad(
+          this.getSubjectNode(fieldTerm.id),
+          namedNode(`${NS_UI}maxValue`),
+          this.jsonLdtoRdf({ value: maxValue })
+        )
+    isNaN(minValue)
+      ? false
+      : this.graph.addQuad(
+          this.getSubjectNode(fieldTerm.id),
+          namedNode(`${NS_UI}minValue`),
+          this.jsonLdtoRdf({ value: minValue })
+        )
   }
 
   getFieldType(exp: any = {}) {
@@ -388,6 +434,7 @@ export class ShexFormModel {
                 this.jsonLdtoRdf({ value: nc.pattern })
               )
             }
+            this.getNumberConstrain(valueExpr, fieldTerm)
           } else {
             throw Error(`Unsupported value expression on ${tePath}: ${JSON.stringify(valueExpr)}`)
           }
