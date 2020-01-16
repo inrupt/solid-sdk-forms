@@ -35,6 +35,7 @@ export const CONTEXT: any = {
 }
 export const UI = {
   PARTS: 'ui:parts',
+  PART: 'ui:part',
   CLONE_PARTS: 'ui:partsClone',
   LABEL: 'ui:label',
   PROPERTY: 'ui:property',

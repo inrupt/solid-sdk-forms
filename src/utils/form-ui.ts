@@ -121,7 +121,16 @@ async function turtleToFormUi(document: any) {
   let fields: any = {}
   const doc = await document
   const partsPath = 'http://www.w3.org/ns/ui#parts'
-  const parts: any = await loopList(doc[partsPath])
+  const partPath = 'http://www.w3.org/ns/ui#part'
+  let parts
+  const part = await doc[partPath]
+
+  if (!part) {
+    parts = await loopList(doc[partsPath])
+  } else {
+    parts = await [part.value]
+  }
+
   for await (const field of parts) {
     const subjectKey: string = getPredicateName(field)
     const subjectPrefix = `subject:${subjectKey}`
@@ -131,7 +140,9 @@ async function turtleToFormUi(document: any) {
       /**
        * If property exist into the subject we added it into the json-ld object
        */
-      if (property.includes('parts') && propertyValue) {
+      if (property === partsPath && propertyValue) {
+        partsFields = await turtleToFormUi(data[field])
+      } else if (property === partPath) {
         partsFields = await turtleToFormUi(data[field])
       }
 
@@ -186,9 +197,10 @@ async function existDocument(document: string) {
 async function partsFields(childs: any, options: any) {
   const uniqueName = uuid()
   const { fieldObject, value, property, podUri } = options
+  const partsKey = fieldObject[UI.PART] ? UI.PART : UI.PARTS
   return {
-    [UI.PARTS]: {
-      ...childs[UI.PARTS],
+    [partsKey]: {
+      ...childs[partsKey],
       [uniqueName]: {
         [UI.NAME]: uniqueName,
         [UI.VALUE]: value,
@@ -211,7 +223,7 @@ function getSubjectLinkId(currentLink: string) {
 function getClonePart(childs: any) {
   return {
     ...childs,
-    [UI.CLONE_PARTS]: childs[UI.PARTS]
+    [UI.CLONE_PARTS]: childs[UI.PART]
   }
 }
 
@@ -268,14 +280,18 @@ export async function mapFormModelWithData(
   if (podUri.includes('#') && !parentUri && !parentProperty) {
     await data.clearCache(podUri.split('#')[0])
   }
+
   /**
    * Get fields parts from Form Model
    */
-  const parts = modelUi[UI.PARTS]
+  const parts = modelUi[UI.PART] ? modelUi[UI.PART] : modelUi[UI.PARTS]
   /**
    * Get fields key into Form Model to loop over each field
    */
-  const fields: any = Object.keys(modelUi[UI.PARTS])
+  let fieldsKey: string = modelUi[UI.PART] ? UI.PART : UI.PARTS
+
+  const fields: any = Object.keys(modelUi[fieldsKey])
+
   let newModelUi = modelUi
   /**
    * Loop into each fields and find the property into Form Model to
@@ -286,7 +302,7 @@ export async function mapFormModelWithData(
     let property = fieldObject[UI.PROPERTY]
     const isMultiple = fieldObject['rdf:type'].includes('Multiple')
     const isGroup = fieldObject['rdf:type'].includes('Group')
-    const hasParts = fieldObject[UI.PARTS]
+    const hasParts = fieldObject[UI.PARTS] || fieldObject[UI.PART]
     let parentValue = ''
     let childs: any = {}
     let updatedField: any = []
@@ -358,6 +374,7 @@ export async function mapFormModelWithData(
      * Create object value with field values
      * Inlcude link only when is a link and type is not Multiple
      */
+
     const objectValue =
       parentValue && !isMultiple
         ? {
@@ -367,7 +384,7 @@ export async function mapFormModelWithData(
             [UI.BASE]: podUri,
             [UI.VALID]: true
           }
-        : { [UI.NAME]: uuid(), [UI.BASE]: podUri, [UI.VALID]: true }
+        : { [UI.NAME]: uuid(), [UI.BASE]: podUri, [UI.VALID]: true, [UI.VALUE]: parentValue }
 
     if (fieldObject[UI.VALUES]) {
       fieldObject = {
@@ -387,14 +404,17 @@ export async function mapFormModelWithData(
           }
         }
 
+    const partsKey = modelUi[UI.PART] ? UI.PART : UI.PARTS
+
     newModelUi = {
       ...newModelUi,
-      [UI.PARTS]: {
-        ...newModelUi[UI.PARTS],
+      [partsKey]: {
+        ...newModelUi[partsKey],
         ...updatedField
       }
     }
   }
+
   return newModelUi
 }
 
