@@ -49,12 +49,13 @@ export async function getClassifierOptions(from: string) {
         currentPredicateType && currentPredicateType.includes('#')
           ? currentPredicateType.split('#')[1]
           : currentPredicateType
+
       if (
         (!deprecated || deprecated.includes('false')) &&
-        label &&
+        quad &&
         (currentType && currentType === type)
       ) {
-        options = [...options, getLabel(label)]
+        options = [...options, quad]
       }
     }
     return options.length === 0 ? ['No Options'] : options
