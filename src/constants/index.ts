@@ -61,7 +61,7 @@ export const UI = {
   DEFAULT_ERROR: 'ui:defaultError'
 }
 
-export const CONSTRAINS: any = {
+export const CONSTRAINTS: any = {
   nonPositiveInteger: {
     maxValue: 0
   },

@@ -8,7 +8,7 @@ import {
   TRIPLE_CONSTRAINT,
   EACH_OF,
   NODE_CONSTRAINT,
-  CONSTRAINS
+  CONSTRAINTS
 } from '@constants'
 import { Meta } from '@interfaces'
 import { ListObject } from './list-object'
@@ -39,32 +39,36 @@ export class ShexFormModel {
   }
 
   /**
-   * Add the right constrain depending on the expression DataType or Explicit constrain.
-   * We are using the CONSTANTS to get the right constrain.
+   * Add the right constraint depending on the expression DataType or Explicit constraint.
+   * We are using the CONSTANTS to get the right constraint.
    * @param fieldTerm to pass the right ID to the node.
-   * @param exp Expression to get the Explicit Constrain.
-   * @returns This Function does not have any returns it adds the UI Constrain or not.
+   * @param exp Expression to get the Explicit Constraint.
+   * @returns This Function does not have any returns it adds the UI Constraint or not.
    */
-  getNumberConstrain(exp: any = {}, fieldTerm: any) {
+  getNumberConstraint(exp: any = {}, fieldTerm: any) {
     const type = exp.datatype && exp.datatype.split('#')[1]
     let maxValue: number
     let minValue: number
 
     /**
-     * Find if there is an Explicit constrain or not.
+     * Find if there is an Explicit constraint or not.
      */
     if (exp.mininclusive || exp.maxinclusive) {
       maxValue = exp.maxinclusive && exp.maxinclusive
       minValue = exp.mininclusive && exp.mininclusive
     } else {
       maxValue =
-        CONSTRAINS[`${type}`] && CONSTRAINS[`${type}`].maxValue && +CONSTRAINS[`${type}`].maxValue
+        CONSTRAINTS[`${type}`] &&
+        CONSTRAINTS[`${type}`].maxValue &&
+        +CONSTRAINTS[`${type}`].maxValue
       minValue =
-        CONSTRAINS[`${type}`] && CONSTRAINS[`${type}`].minValue && +CONSTRAINS[`${type}`].minValue
+        CONSTRAINTS[`${type}`] &&
+        CONSTRAINTS[`${type}`].minValue &&
+        +CONSTRAINTS[`${type}`].minValue
     }
 
     /**
-     * Check if there is a number or undefined to add or not the UI:Constrain.
+     * Check if there is a number or undefined to add or not the UI:Constraint.
      * The value can be 0
      */
     isNaN(maxValue)
@@ -434,7 +438,7 @@ export class ShexFormModel {
                 this.jsonLdtoRdf({ value: nc.pattern })
               )
             }
-            this.getNumberConstrain(valueExpr, fieldTerm)
+            this.getNumberConstraint(valueExpr, fieldTerm)
           } else {
             throw Error(`Unsupported value expression on ${tePath}: ${JSON.stringify(valueExpr)}`)
           }
