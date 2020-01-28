@@ -53,18 +53,17 @@ export class ShexFormModel {
     /**
      * Find if there is an Explicit constraint or not.
      */
-    if (exp.mininclusive || exp.maxinclusive) {
-      maxValue = exp.maxinclusive && exp.maxinclusive
-      minValue = exp.mininclusive && exp.mininclusive
-    } else {
-      maxValue =
-        CONSTRAINTS[`${type}`] &&
-        CONSTRAINTS[`${type}`].maxValue &&
-        +CONSTRAINTS[`${type}`].maxValue
-      minValue =
-        CONSTRAINTS[`${type}`] &&
-        CONSTRAINTS[`${type}`].minValue &&
-        +CONSTRAINTS[`${type}`].minValue
+    if (type) {
+      if (exp.mininclusive || exp.maxinclusive) {
+        maxValue = exp.maxinclusive && exp.maxinclusive
+        minValue = exp.mininclusive && exp.mininclusive
+      } else {
+        // Not all numeric types have both a max and min value. For example  non-negative constraints would only
+        // be a minValue. This block checks if there's a max or min value for the given field type and only sets
+        // the appropriate fields for that numeric data type
+        maxValue = CONSTRAINTS[type] && CONSTRAINTS[type].maxValue && +CONSTRAINTS[type].maxValue
+        minValue = CONSTRAINTS[type] && CONSTRAINTS[type].minValue && +CONSTRAINTS[type].minValue
+      }
     }
 
     /**
