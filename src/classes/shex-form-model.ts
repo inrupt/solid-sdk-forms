@@ -7,7 +7,8 @@ import {
   IRI_XsdString,
   TRIPLE_CONSTRAINT,
   EACH_OF,
-  NODE_CONSTRAINT
+  NODE_CONSTRAINT,
+  CONSTRAINTS
 } from '@constants'
 import { Meta } from '@interfaces'
 import { ListObject } from './list-object'
@@ -35,6 +36,52 @@ export class ShexFormModel {
 
   getSubjectNode(term: string) {
     return namedNode(`#${term}`)
+  }
+
+  /**
+   * Add the right constraint depending on the expression DataType or Explicit constraint.
+   * We are using the CONSTANTS to get the right constraint.
+   * @param fieldTerm to pass the right ID to the node.
+   * @param exp Expression to get the Explicit Constraint.
+   * @returns This Function does not have any returns it adds the UI Constraint or not.
+   */
+  getNumberConstraint(exp: any = {}, fieldTerm: any) {
+    const type = exp.datatype && exp.datatype.split('#')[1]
+    let maxValue: number
+    let minValue: number
+
+    /**
+     * Find if there is an Explicit constraint or not.
+     */
+    if (exp.mininclusive || exp.maxinclusive) {
+      maxValue = exp.maxinclusive && exp.maxinclusive
+      minValue = exp.mininclusive && exp.mininclusive
+    } else {
+      // Not all numeric types have both a max and min value. For example  non-negative constraints would only
+      // be a minValue. This block checks if there's a max or min value for the given field type and only sets
+      // the appropriate fields for that numeric data type
+      maxValue = CONSTRAINTS[type] && CONSTRAINTS[type].maxValue && +CONSTRAINTS[type].maxValue
+      minValue = CONSTRAINTS[type] && CONSTRAINTS[type].minValue && +CONSTRAINTS[type].minValue
+    }
+
+    /**
+     * Check if there is a number or undefined to add or not the UI:Constraint.
+     * The value can be 0
+     */
+    isNaN(maxValue)
+      ? false
+      : this.graph.addQuad(
+          this.getSubjectNode(fieldTerm.id),
+          namedNode(`${NS_UI}maxValue`),
+          this.jsonLdtoRdf({ value: maxValue })
+        )
+    isNaN(minValue)
+      ? false
+      : this.graph.addQuad(
+          this.getSubjectNode(fieldTerm.id),
+          namedNode(`${NS_UI}minValue`),
+          this.jsonLdtoRdf({ value: minValue })
+        )
   }
 
   getFieldType(exp: any = {}) {
@@ -386,6 +433,7 @@ export class ShexFormModel {
                 this.jsonLdtoRdf({ value: nc.pattern })
               )
             }
+            this.getNumberConstraint(valueExpr, fieldTerm)
           } else {
             throw Error(`Unsupported value expression on ${tePath}: ${JSON.stringify(valueExpr)}`)
           }
