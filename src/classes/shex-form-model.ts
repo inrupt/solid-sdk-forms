@@ -358,17 +358,15 @@ export class ShexFormModel {
               this.iriRdftype,
               namedNode(`${NS_UI}Multiple`)
             )
+
             /**
-             * Add parts of group into list
+             * Adding a Single Part
              */
-            const groupParts = new ListObject(
+            graph.addQuad(
               `#${fieldTerm.id}`,
-              namedNode(`${NS_UI}parts`),
-              graph,
-              this.termFactory
+              namedNode(`${NS_UI}part`),
+              this.jsonLdtoRdf(`#${sanitizedPath}_parts_${i}_group`)
             )
-            groupParts.add(groupId)
-            groupParts.end()
 
             this.walkShape(valueExpr, groupId, `${path}/@${this.localName(te.valueExpr)}`, true)
           } else if (valueExpr.type === NODE_CONSTRAINT) {
