@@ -33,7 +33,13 @@ export const CONTEXT: any = {
     }
   }
 }
+
+export const RDF = {
+  TYPE: 'rdf:type'
+}
+
 export const UI = {
+  GROUP: 'ui:group',
   PARTS: 'ui:parts',
   PART: 'ui:part',
   CLONE_PARTS: 'ui:partsClone',

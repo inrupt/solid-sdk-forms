@@ -1,8 +1,7 @@
 import data from '@solid/query-ldflex'
 import auth from 'solid-auth-client'
 import uuid from 'uuid'
-import { CONTEXT } from '@constants'
-import { UI } from '@constants'
+import { CONTEXT, RDF, UI } from '@constants'
 
 /**
  * Find prefix context to add into object property
@@ -267,9 +266,33 @@ function existPodUri(podUri: string) {
 }
 
 /**
+ * add the 'property' value to the model properties
+ * @param model form model without the data values
+ * @param dataSource IRI where to look for the data values
+ */
+export async function mapData(model: any, dataSource: string): Promise<any> {
+  /* the model will always has parts, as any for does */
+  Object.keys(model[UI.PARTS]).map(async subject => {
+    let value = model[UI.PARTS][subject]
+    /* if there is a inner group then we call recursively */
+    if (value[RDF.TYPE] === 'http://www.w3.org/ns/ui#Group') {
+      await mapData(value, dataSource)
+    } else {
+    /* if this is a non-group field then we look for the value in the source and assign it to 'ui:value' */
+      const property = value[UI.PROPERTY]
+      /* there are some edge cases in the original that I'm skipping for now: CLASSIFIER */
+      value[UI.VALUE] = (await data[dataSource][property]).value
+      model[subject] = value
+    }
+  })
+}
+
+/**
  *  Form Model with user data pod
  * @param modelUi
  * @param podUri
+ * @param parentProperty
+ * @param parentUri
  */
 export async function mapFormModelWithData(
   modelUi: any,
@@ -433,9 +456,11 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     },
     [UI.PARTS]: { ...model }
   }
-  const modelWidthData = mapFormModelWithData(modelUi, documentPod)
+  // const modelWidthData = mapFormModelWithData(modelUi, documentPod)
+  await mapData(modelUi, documentPod)
 
-  return modelWidthData
+  console.log('returning model with data: ', modelUi)
+  return modelUi
 }
 
 /**
