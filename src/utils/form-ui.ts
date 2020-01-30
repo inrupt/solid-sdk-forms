@@ -187,28 +187,6 @@ function subjectPrefix(document: string) {
   return `${document}#`
 }
 
-async function existDocument(document: string) {
-  const result = await auth.fetch(document, { method: 'GET' })
-
-  return result.status !== 404
-}
-
-async function partsFields(childs: any, options: any) {
-  const uniqueName = uuid()
-  const { fieldObject, value, property, podUri } = options
-  const partsKey = fieldObject[UI.PART] ? UI.PART : UI.PARTS
-  return {
-    [partsKey]: {
-      ...childs[partsKey],
-      [uniqueName]: {
-        [UI.NAME]: uniqueName,
-        [UI.VALUE]: value,
-        ...(await mapFormModelWithData(fieldObject, value, property, podUri))
-      }
-    }
-  }
-}
-
 function getSubjectLinkId(currentLink: string) {
   const id = Date.now()
 
@@ -278,7 +256,7 @@ export async function mapData(model: any, dataSource: string): Promise<any> {
     if (value[RDF.TYPE] === 'http://www.w3.org/ns/ui#Group') {
       await mapData(value, dataSource)
     } else {
-    /* if this is a non-group field then we look for the value in the source and assign it to 'ui:value' */
+      /* if this is a non-group field then we look for the value in the source and assign it to 'ui:value' */
       const property = value[UI.PROPERTY]
       /* there are some edge cases in the original that I'm skipping for now: CLASSIFIER */
       value[UI.VALUE] = (await data[dataSource][property]).value
@@ -290,155 +268,110 @@ export async function mapData(model: any, dataSource: string): Promise<any> {
 /**
  *  Form Model with user data pod
  * @param modelUi
- * @param podUri
+ * @param document
  * @param parentProperty
  * @param parentUri
  */
 export async function mapFormModelWithData(
   modelUi: any,
-  podUri: string,
+  document: string,
   parentProperty?: string,
   parentUri?: string
 ) {
-  if (podUri.includes('#') && !parentUri && !parentProperty) {
-    await data.clearCache(podUri.split('#')[0])
+  // If the document is a nanedNode, clear it from the ldflex cache
+  if (document.includes('#') && !parentUri && !parentProperty) {
+    await data.clearCache(document.split('#')[0])
   }
 
-  /**
-   * Get fields parts from Form Model
-   */
+  // Get a list of parts for this form model and get the object keys so we can loop over them
   const parts = modelUi[UI.PART] ? modelUi[UI.PART] : modelUi[UI.PARTS]
-  /**
-   * Get fields key into Form Model to loop over each field
-   */
-  let fieldsKey: string = modelUi[UI.PART] ? UI.PART : UI.PARTS
+  let partsKey: string = modelUi[UI.PART] ? UI.PART : UI.PARTS
+  const partList: any = Object.keys(modelUi[partsKey])
 
-  const fields: any = Object.keys(modelUi[fieldsKey])
-
-  let newModelUi = modelUi
   /**
    * Loop into each fields and find the property into Form Model to
    * match with pod property data
    */
-  for await (const fieldValue of fields) {
-    let fieldObject = parts[fieldValue]
-    let property = fieldObject[UI.PROPERTY]
-    const isMultiple = fieldObject['rdf:type'].includes('Multiple')
-    const isGroup = fieldObject['rdf:type'].includes('Group')
-    const hasParts = fieldObject[UI.PARTS] || fieldObject[UI.PART]
-    let parentValue = ''
-    let childs: any = {}
-    let updatedField: any = []
+  for await (const part of partList) {
+    let partObject = parts[part]
+    let property = partObject[UI.PROPERTY]
+    const isMultiple = partObject['rdf:type'].includes('Multiple')
+    const isGroup = partObject['rdf:type'].includes('Group')
+    const hasParts = partObject[UI.PARTS] || partObject[UI.PART]
 
-    /**
-     * Get parent default values for parent fields or single fields without
-     * parts
-     */
+    let children: any = {}
+
+    // Get the value of a part when that part has a property
     if (property) {
       const newProperty = property.replace(/(^\w+:|^)\/\//, `http://`)
-      if (fieldObject['rdf:type'].includes('Classifier')) {
-        let result: any
+      const fetchedValue = existPodUri(document) && (await data[document][newProperty])
 
-        if (fieldObject[UI.VALUES]) {
-          result = existPodUri(podUri) && (await data[podUri][newProperty])
-          parentValue = (result && result.value) || ''
-        } else {
-          result = existPodUri(podUri) && (await data[podUri].type)
-          parentValue = (result && result.value) || ''
-        }
-      } else {
-        const field = existPodUri(podUri) && (await data[podUri][newProperty])
-        parentValue = (field && field.value) || ''
+      // TODO: Replace empty strings with default values if they exist
+      partObject = {
+        ...partObject,
+        [UI.VALUE]: fetchedValue ? fetchedValue.value : '',
+        [UI.OLDVALUE]: fetchedValue ? fetchedValue.value : '',
+        [UI.NAME]: uuid(),
+        [UI.BASE]: document,
+        [UI.VALID]: true
       }
+      modelUi[partsKey][part] = partObject
     }
-    /**
-     * If field has parts call recursive function to deep into each children fields
-     */
+
     if (hasParts) {
-      /**
-       * If field is multiple will remove children subject and add custom node id
-       */
       if (isMultiple) {
-        /**
-         * Add unique id for parts fields when podUri is empty or not exist.
-         */
+        // Add unique id for parts fields when podUri is empty or not exist.
         let existField = false
-        if (existPodUri(podUri)) {
-          for await (let fieldData of data[podUri][property]) {
+        if (existPodUri(document)) {
+          for await (let fieldData of data[document][property]) {
             const { value } = fieldData
+            console.log('multiple value', value)
             existField = true
-            childs = await partsFields(childs, { fieldObject, property, podUri, value })
-            childs = getClonePart(childs)
+            //  children = await partsFields(children, { fieldObject: partObject, property, podUri: document, value })
+            const uniqueName = uuid()
+            children = {
+              ...children[partsKey],
+              [uniqueName]: {
+                [UI.CLONE_PARTS]: children[UI.PART],
+                [UI.NAME]: uniqueName,
+                [UI.VALUE]: value,
+                [UI.BASE]: parentUri
+              }
+            }
+            partObject = {
+              ...partObject,
+              ...children
+            }
+            await mapFormModelWithData(partObject, document, value, property)
           }
         }
 
         if (!existField) {
-          const idLink = getSubjectLinkId(podUri)
-          childs = await partsFields(childs, { fieldObject, property, podUri, value: idLink })
-          childs = getClonePart(childs)
+          const idLink = getSubjectLinkId(document)
+          // children = await partsFields(children, { fieldObject: partObject, property, podUri: document, value: idLink })
+          const uniqueName = uuid()
+          children = {
+            ...children[partsKey],
+            [uniqueName]: {
+              [UI.NAME]: uniqueName,
+              [UI.VALUE]: idLink
+            },
+            [UI.CLONE_PARTS]: children[UI.PART]
+          }
+          partObject = {
+            ...partObject,
+            ...children
+          }
+          await mapFormModelWithData(partObject, document, idLink, property)
         }
       }
 
       if (isGroup) {
-        const parentPro =
-          parentProperty && parentUri
-            ? { [UI.PARENT_PROPERTY]: parentProperty, [UI.BASE]: parentUri }
-            : {}
-
-        newModelUi = {
-          ...parentPro,
-          [UI.REFERENCE]: fieldValue,
-          ...(await mapFormModelWithData(fieldObject, podUri))
-        }
-      }
-    }
-
-    /**
-     * Create object value with field values
-     * Inlcude link only when is a link and type is not Multiple
-     */
-
-    const objectValue =
-      parentValue && !isMultiple
-        ? {
-            [UI.VALUE]: parentValue,
-            [UI.OLDVALUE]: parentValue,
-            [UI.NAME]: uuid(),
-            [UI.BASE]: podUri,
-            [UI.VALID]: true
-          }
-        : { [UI.NAME]: uuid(), [UI.BASE]: podUri, [UI.VALID]: true, [UI.VALUE]: parentValue }
-
-    if (fieldObject[UI.VALUES]) {
-      fieldObject = {
-        ...fieldObject
-      }
-    }
-    /**
-     * Updated field if value is not a group
-     */
-    updatedField = isGroup
-      ? updatedField
-      : {
-          [fieldValue]: {
-            ...fieldObject,
-            ...objectValue,
-            ...childs
-          }
-        }
-
-    const partsKey = modelUi[UI.PART] ? UI.PART : UI.PARTS
-
-    newModelUi = {
-      ...newModelUi,
-      [partsKey]: {
-        ...newModelUi[partsKey],
-        ...updatedField
+        modelUi[UI.REFERENCE] = part
+        await mapFormModelWithData(partObject, document)
       }
     }
   }
-
-  return newModelUi
 }
 
 /**
@@ -456,8 +389,8 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     },
     [UI.PARTS]: { ...model }
   }
-  // const modelWidthData = mapFormModelWithData(modelUi, documentPod)
-  await mapData(modelUi, documentPod)
+  await mapFormModelWithData(modelUi, documentPod)
+  // await mapData(modelUi, documentPod)
 
   console.log('returning model with data: ', modelUi)
   return modelUi
