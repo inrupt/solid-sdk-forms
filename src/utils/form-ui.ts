@@ -268,19 +268,19 @@ export async function mapData(model: any, dataSource: string): Promise<any> {
 /**
  *  Form Model with user data pod
  * @param modelUi
- * @param document
- * @param parentProperty
+ * @param subject
+ * @param nodeSubject
  * @param parentUri
  */
 export async function mapFormModelWithData(
   modelUi: any,
-  document: string,
-  parentProperty?: string,
+  subject: string,
+  nodeSubject?: string,
   parentUri?: string
 ) {
   // If the document is a nanedNode, clear it from the ldflex cache
-  if (document.includes('#') && !parentUri && !parentProperty) {
-    await data.clearCache(document.split('#')[0])
+  if (subject.includes('#') && !parentUri && !nodeSubject) {
+    await data.clearCache(subject.split('#')[0])
   }
 
   // Get a list of parts for this form model and get the object keys so we can loop over them
@@ -288,6 +288,7 @@ export async function mapFormModelWithData(
   let partsKey: string = modelUi[UI.PART] ? UI.PART : UI.PARTS
   const partList: any = Object.keys(modelUi[partsKey])
 
+  console.log('modelUi', modelUi)
   /**
    * Loop into each fields and find the property into Form Model to
    * match with pod property data
@@ -304,7 +305,7 @@ export async function mapFormModelWithData(
     // Get the value of a part when that part has a property
     if (property) {
       const newProperty = property.replace(/(^\w+:|^)\/\//, `http://`)
-      const fetchedValue = existPodUri(document) && (await data[document][newProperty])
+      const fetchedValue = existPodUri(subject) && (await data[subject][newProperty])
 
       // TODO: Replace empty strings with default values if they exist
       partObject = {
@@ -312,63 +313,50 @@ export async function mapFormModelWithData(
         [UI.VALUE]: fetchedValue ? fetchedValue.value : '',
         [UI.OLDVALUE]: fetchedValue ? fetchedValue.value : '',
         [UI.NAME]: uuid(),
-        [UI.BASE]: document,
+        [UI.BASE]: subject,
         [UI.VALID]: true
       }
       modelUi[partsKey][part] = partObject
     }
 
     if (hasParts) {
+      // A Multiple always has 1 ui:part, but can have multiple copies of that one part. The copies are the instances of each part.
+      // For example, if a Multiple is a Group representing an Address, you can have multiple Addresses, represented by multiple groups
       if (isMultiple) {
-        // Add unique id for parts fields when podUri is empty or not exist.
-        let existField = false
-        if (existPodUri(document)) {
-          for await (let fieldData of data[document][property]) {
-            const { value } = fieldData
-            console.log('multiple value', value)
-            existField = true
-            //  children = await partsFields(children, { fieldObject: partObject, property, podUri: document, value })
-            const uniqueName = uuid()
-            children = {
-              ...children[partsKey],
-              [uniqueName]: {
-                [UI.CLONE_PARTS]: children[UI.PART],
-                [UI.NAME]: uniqueName,
-                [UI.VALUE]: value,
-                [UI.BASE]: parentUri
-              }
-            }
-            partObject = {
-              ...partObject,
-              ...children
-            }
-            await mapFormModelWithData(partObject, document, value, property)
-          }
-        }
+        // If the document uri starts with http and exists
+        if (existPodUri(subject)) {
+          // loop over all properties in the document
+          const fieldData = await data[subject][property]
+          const formObjectValue =
+            fieldData && fieldData.value ? fieldData.value : getSubjectLinkId(subject)
+          const propertyPredicate = nodeSubject ? nodeSubject : formObjectValue
 
-        if (!existField) {
-          const idLink = getSubjectLinkId(document)
-          // children = await partsFields(children, { fieldObject: partObject, property, podUri: document, value: idLink })
+          //  children = await partsFields(children, { fieldObject: partObject, property, podUri: document, value })
           const uniqueName = uuid()
+          console.log('uuid', uniqueName)
           children = {
             ...children[partsKey],
             [uniqueName]: {
+              [UI.CLONE_PARTS]: children[UI.PART],
               [UI.NAME]: uniqueName,
-              [UI.VALUE]: idLink
-            },
-            [UI.CLONE_PARTS]: children[UI.PART]
+              [UI.VALUE]: formObjectValue,
+              [UI.BASE]: parentUri
+            }
           }
-          partObject = {
-            ...partObject,
-            ...children
-          }
-          await mapFormModelWithData(partObject, document, idLink, property)
+
+          console.log('children', children)
+
+          partObject.children = children
+          console.log('multiple partObject', partObject)
+          await mapFormModelWithData(partObject, subject, propertyPredicate)
         }
       }
 
       if (isGroup) {
+        // Add a reference to the part key and then call the function recursively with the part itself
         modelUi[UI.REFERENCE] = part
-        await mapFormModelWithData(partObject, document)
+        const propertyPredicate = nodeSubject ? nodeSubject : subject
+        await mapFormModelWithData(partObject, propertyPredicate)
       }
     }
   }
