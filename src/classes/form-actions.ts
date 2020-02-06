@@ -90,6 +90,7 @@ export class FormActions {
     for await (const key of keyFields) {
       // Get the field
       const currentField = this.formObject[key]
+      console.log('save function - currentField', currentField)
 
       // Copy the field
       let validatedField = { ...currentField }

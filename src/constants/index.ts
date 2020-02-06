@@ -107,6 +107,8 @@ export const CONSTRAINTS: any = {
 const nsBase = 'http://www.w3.org/ns/ui#'
 export const NS = {
   UI: {
-    TimeField: `${nsBase}TimeField`
+    TimeField: `${nsBase}TimeField`,
+    MultipleField: `${nsBase}Multiple`,
+    GroupField: `${nsBase}Group`
   }
 }
