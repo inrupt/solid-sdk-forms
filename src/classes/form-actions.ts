@@ -90,7 +90,6 @@ export class FormActions {
     for await (const key of keyFields) {
       // Get the field
       const currentField = this.formObject[key]
-      console.log('save function - currentField', currentField)
 
       // Copy the field
       let validatedField = { ...currentField }
@@ -165,18 +164,11 @@ export class FormActions {
    */
   static deleteFieldPod = async (field: any) => {
     // We need a base which serves as the subject for the field to delete
-    console.log('deletefieldpod', field)
     if (field[UI.BASE]) {
-      console.log('UI BASE')
       // If there is a parent_property we are deleting a full namedNode, like an address, not just a field
       if (field[UI.PARENT_PROPERTY]) {
-        console.log('---- delete node ----')
-        console.log('subject', field[UI.BASE])
-        console.log('predicate', field[UI.PARENT_PROPERTY])
-        console.log('value to delete', field[UI.VALUE])
         await data[field[UI.BASE]][field[UI.PARENT_PROPERTY]].delete(namedNode(field[UI.VALUE]))
       } else {
-        console.log('ELSE')
         await data[field[UI.BASE]][field[UI.PROPERTY]].delete(field[UI.VALUE])
       }
     }
