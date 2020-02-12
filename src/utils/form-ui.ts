@@ -1,6 +1,7 @@
 import data from '@solid/query-ldflex'
 import uuid from 'uuid'
 import { CONTEXT, RDF, UI } from '@constants'
+import { cloneDeep } from 'lodash'
 
 /**
  * Find prefix context to add into object property
@@ -212,13 +213,6 @@ function getSubjectLinkId(currentLink: string) {
   return `${currentLink}#${id}`
 }
 
-function getClonePart(childs: any) {
-  return {
-    ...childs,
-    [UI.CLONE_PARTS]: childs[UI.PART]
-  }
-}
-
 /**
  * Updates the formObject with the new values if something has been updated in the podUri's turtle file
  * @param formObject
@@ -281,6 +275,48 @@ export async function mapData(model: any, dataSource: string): Promise<any> {
 }
 
 /**
+ * This function is designed to clean the cloned fields of any values. In some code paths, the clone parts are coming
+ * from existing parts lists, and the values and subjects need to be cleaned and regenerated
+ * @param podUri
+ * @param childs
+ */
+function cleanClonePartData(podUri: string, childs: any) {
+  try {
+    // Create a new subject for the new cloned parts
+    const nodeSubject = getSubjectLinkId(podUri)
+
+    const cloneKey = Object.keys(childs[UI.CLONE_PARTS])[0]
+    const clonePartsKey = Object.keys(childs[UI.CLONE_PARTS][cloneKey][UI.PARTS])
+
+    // Loop over all of the subjects in the cloneParts array. There should only be one, but there may be a bug
+    // causing there to be more than one. It shouldn't matter, though.
+    clonePartsKey.forEach(part => {
+      // Get the part itself. This should be the group, or the item inside of the multiple
+      const clonePart = childs[UI.CLONE_PARTS][cloneKey][UI.PARTS][part]
+      const clonePartParts = Object.keys(clonePart[UI.PARTS])
+
+      // For each part in the group (or individual multiple)
+      clonePartParts.forEach(subPart => {
+        // Set the value to null for the part and update the base and parent value so it is a new set of parts instead of
+        // tied to the original
+        clonePart[UI.PARTS][subPart] = {
+          ...clonePart[UI.PARTS][subPart],
+          [UI.VALUE]: '',
+          [UI.OLDVALUE]: '',
+          [UI.BASE]: nodeSubject,
+          parent: {
+            ...clonePart[UI.PARTS][subPart].parent,
+            [UI.VALUE]: nodeSubject
+          }
+        }
+      })
+    })
+  } catch (error) {
+    throw Error(error)
+  }
+}
+
+/**
  *  Form Model with user data pod
  * @param modelUi
  * @param subject
@@ -296,8 +332,6 @@ export async function mapFormModelWithData(
   if (podUri.includes('#') && !parentUri && !parentProperty) {
     await data.clearCache(podUri.split('#')[0])
   }
-
-  console.log('=========================================')
 
   /**
    * Get fields parts from Form Model
@@ -316,22 +350,22 @@ export async function mapFormModelWithData(
    * match with pod property data
    */
   for await (const fieldValue of fields) {
-    console.log('-----------' + fieldValue + '------------')
     let fieldObject = parts[fieldValue]
     let property = fieldObject[UI.PROPERTY]
     const isMultiple = fieldObject['rdf:type'].includes('Multiple')
     const isGroup = fieldObject['rdf:type'].includes('Group')
     const hasParts = fieldObject[UI.PARTS] || fieldObject[UI.PART]
+
     let parentValue = ''
     let childs: any = {}
     let updatedField: any = []
+    let parentObject: any = null
 
     /**
      * Get parent default values for parent fields or single fields without
      * parts
      */
     if (property) {
-      console.log('hasProperty', property)
       const newProperty = property.replace(/(^\w+:|^)\/\//, `http://`)
       if (fieldObject['rdf:type'].includes('Classifier')) {
         let result: any
@@ -346,8 +380,14 @@ export async function mapFormModelWithData(
       } else {
         const field = existPodUri(podUri) && (await data[podUri][newProperty])
         parentValue = (field && field.value) || ''
-        console.log('field', field)
-        console.log('parentValue', parentValue)
+
+        if (parentUri && parentProperty) {
+          parentObject = {
+            [UI.VALUE]: podUri,
+            [UI.PARENT_PROPERTY]: parentProperty,
+            [UI.BASE]: parentUri
+          }
+        }
       }
     }
     /**
@@ -358,38 +398,35 @@ export async function mapFormModelWithData(
        * If field is multiple will remove children subject and add custom node id
        */
       if (isMultiple) {
-        console.log('is multiple')
         /**
          * Add unique id for parts fields when podUri is empty or not exist.
          */
-        let existField = false
+        let groupHasExistingParts = false
         if (existPodUri(podUri)) {
           for await (let fieldData of data[podUri][property]) {
             const { value } = fieldData
-            existField = true
+            groupHasExistingParts = true
             childs = await partsFields(childs, { fieldObject, property, podUri, value })
-            childs = getClonePart(childs)
+
+            // TODO: Remove the dependency on lodash by adding a custom deep clone function
+            childs[UI.CLONE_PARTS] = cloneDeep(childs[UI.PART])
+            cleanClonePartData(podUri, childs)
           }
         }
 
-        if (!existField) {
+        if (!groupHasExistingParts) {
           const idLink = getSubjectLinkId(podUri)
           childs = await partsFields(childs, { fieldObject, property, podUri, value: idLink })
-          childs = getClonePart(childs)
+          childs[UI.CLONE_PARTS] = cloneDeep(childs[UI.PART])
         }
       }
 
       if (isGroup) {
-        console.log('is group')
         // For groups, we need to maintain the base URI for subject, so we know where to save data for items
         const parentPro =
           parentProperty && parentUri
-            ? { [UI.PARENT_PROPERTY]: parentProperty, [UI.BASE]: parentUri }
+            ? { [UI.PARENT_PROPERTY]: parentProperty, [UI.BASE]: parentUri, [UI.VALUE]: podUri }
             : { [UI.PARENT_PROPERTY]: property, [UI.BASE]: podUri }
-
-        console.log('parentPro', parentPro)
-        console.log('parentProperty', parentProperty)
-        console.log('fieldObject', fieldObject)
 
         const formModelTemp = await mapFormModelWithData(
           fieldObject,
@@ -397,7 +434,6 @@ export async function mapFormModelWithData(
           parentProperty,
           parentUri
         )
-        console.log('form model temp', formModelTemp)
 
         newModelUi = {
           ...newModelUi,
@@ -410,7 +446,6 @@ export async function mapFormModelWithData(
             }
           }
         }
-        console.log('group model', newModelUi)
       }
     }
 
@@ -427,8 +462,6 @@ export async function mapFormModelWithData(
           }
         : { [UI.NAME]: uuid(), [UI.BASE]: podUri, [UI.VALID]: true, [UI.VALUE]: parentValue }
 
-    console.log('objectValue', objectValue)
-
     if (fieldObject[UI.VALUES]) {
       fieldObject = {
         ...fieldObject
@@ -437,7 +470,6 @@ export async function mapFormModelWithData(
     /**
      * Updated field if value is not a group
      */
-    console.log('pre-check updatedField', updatedField)
     updatedField = isGroup
       ? updatedField
       : {
@@ -448,7 +480,15 @@ export async function mapFormModelWithData(
           }
         }
 
-    console.log('updatedField', updatedField)
+    if (parentObject) {
+      updatedField = {
+        ...updatedField,
+        [fieldValue]: {
+          ...updatedField[fieldValue],
+          parent: parentObject
+        }
+      }
+    }
 
     const partsKey = modelUi[UI.PART] ? UI.PART : UI.PARTS
 
@@ -459,11 +499,8 @@ export async function mapFormModelWithData(
         ...updatedField
       }
     }
-
-    console.log('end loop newModelUi', newModelUi)
   }
 
-  console.log('final model', newModelUi)
   return newModelUi
 }
 /**
@@ -481,7 +518,6 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     },
     [UI.PARTS]: { ...model }
   }
-  console.log('pre mapping', modelUi)
   return mapFormModelWithData(modelUi, documentPod)
 }
 

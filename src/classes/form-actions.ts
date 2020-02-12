@@ -1,7 +1,7 @@
 import uuid from 'uuid'
 import data from '@solid/query-ldflex'
 import { namedNode } from '@rdfjs/data-model'
-import { UI } from '@constants'
+import { NS, RDF, UI } from '@constants'
 import { validator } from '@utils'
 
 /**
@@ -122,6 +122,7 @@ export class FormActions {
               ? data[currentField.parent[UI.VALUE]].type
               : data[currentField.parent[UI.VALUE]][predicate]
 
+            // If there's no old value, this is a new field, so create the new node for it
             if (currentField[UI.OLDVALUE] && currentField[UI.OLDVALUE] !== '') {
               await podData.set(updatedValue)
             } else {
@@ -164,11 +165,18 @@ export class FormActions {
    */
   static deleteFieldPod = async (field: any) => {
     // We need a base which serves as the subject for the field to delete
+    console.log('deletefieldpod', field)
     if (field[UI.BASE]) {
+      console.log('UI BASE')
       // If there is a parent_property we are deleting a full namedNode, like an address, not just a field
       if (field[UI.PARENT_PROPERTY]) {
+        console.log('---- delete node ----')
+        console.log('subject', field[UI.BASE])
+        console.log('predicate', field[UI.PARENT_PROPERTY])
+        console.log('value to delete', field[UI.VALUE])
         await data[field[UI.BASE]][field[UI.PARENT_PROPERTY]].delete(namedNode(field[UI.VALUE]))
       } else {
+        console.log('ELSE')
         await data[field[UI.BASE]][field[UI.PROPERTY]].delete(field[UI.VALUE])
       }
     }
@@ -253,9 +261,22 @@ export class FormActions {
           if (model[fieldKey][UI.NAME] === field) {
             // First, loop over all parts, if any, that are contained in this node and delete them first
             const partToDelete = model[fieldKey]
-            if (partToDelete[UI.PARTS]) {
-              for (const key of Object.keys(partToDelete[UI.PARTS])) {
+            const parts = partToDelete[UI.PARTS] || partToDelete[UI.PART]
+
+            // When parts exist, this is a group. In fact, only groups have a delete for now
+            if (parts) {
+              // Loop over the group - in this case just the parent group
+              for (const key of Object.keys(parts)) {
+                const groupParts = partToDelete[UI.PARTS][key][UI.PARTS]
                 await FormActions.deleteFieldPod(partToDelete[UI.PARTS][key])
+
+                // Loop over each of the group parts and delete them individually. This prevents there
+                // from being orphaned data in the pod
+                for (const groupPartKey of Object.keys(groupParts)) {
+                  await FormActions.deleteFieldPod(
+                    partToDelete[UI.PARTS][key][UI.PARTS][groupPartKey]
+                  )
+                }
               }
             }
 
