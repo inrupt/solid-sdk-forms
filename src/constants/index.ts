@@ -33,7 +33,13 @@ export const CONTEXT: any = {
     }
   }
 }
+
+export const RDF = {
+  TYPE: 'rdf:type'
+}
+
 export const UI = {
+  GROUP: 'ui:group',
   PARTS: 'ui:parts',
   PART: 'ui:part',
   CLONE_PARTS: 'ui:partsClone',
@@ -101,6 +107,8 @@ export const CONSTRAINTS: any = {
 const nsBase = 'http://www.w3.org/ns/ui#'
 export const NS = {
   UI: {
-    TimeField: `${nsBase}TimeField`
+    TimeField: `${nsBase}TimeField`,
+    MultipleField: `${nsBase}Multiple`,
+    GroupField: `${nsBase}Group`
   }
 }
