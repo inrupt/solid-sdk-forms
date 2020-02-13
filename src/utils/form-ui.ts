@@ -283,7 +283,13 @@ export async function mapData(model: any, dataSource: string): Promise<any> {
 function cleanClonePartData(podUri: string, childs: any) {
   try {
     // Create a new subject for the new cloned parts
-    const nodeSubject = getSubjectLinkId(podUri)
+    // const nodeSubject = getSubjectLinkId(podUri)
+
+    Object.keys(childs[UI.CLONE_PARTS]).forEach((key, index) => {
+      if (index !== 0) {
+        delete childs[UI.CLONE_PARTS][key]
+      }
+    })
 
     const cloneKey = Object.keys(childs[UI.CLONE_PARTS])[0]
     const clonePartsKey = Object.keys(childs[UI.CLONE_PARTS][cloneKey][UI.PARTS])
@@ -303,10 +309,10 @@ function cleanClonePartData(podUri: string, childs: any) {
           ...clonePart[UI.PARTS][subPart],
           [UI.VALUE]: '',
           [UI.OLDVALUE]: '',
-          [UI.BASE]: nodeSubject,
+          // [UI.BASE]: nodeSubject,
           parent: {
-            ...clonePart[UI.PARTS][subPart].parent,
-            [UI.VALUE]: nodeSubject
+            ...clonePart[UI.PARTS][subPart].parent
+            // [UI.VALUE]: nodeSubject
           }
         }
       })
@@ -409,6 +415,7 @@ export async function mapFormModelWithData(
             childs = await partsFields(childs, { fieldObject, property, podUri, value })
 
             // TODO: Remove the dependency on lodash by adding a custom deep clone function
+            // @ts-ignore
             childs[UI.CLONE_PARTS] = cloneDeep(childs[UI.PART])
             cleanClonePartData(podUri, childs)
           }
@@ -417,6 +424,7 @@ export async function mapFormModelWithData(
         if (!groupHasExistingParts) {
           const idLink = getSubjectLinkId(podUri)
           childs = await partsFields(childs, { fieldObject, property, podUri, value: idLink })
+          // @ts-ignore
           childs[UI.CLONE_PARTS] = cloneDeep(childs[UI.PART])
         }
       }
