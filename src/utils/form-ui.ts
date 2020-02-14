@@ -297,9 +297,7 @@ function cleanClonePartData(childs: any) {
     // causing there to be more than one. It shouldn't matter, though.
     clonePartsKey.forEach(part => {
       // Get the part itself. This should be the group, or the item inside of the multiple
-      let clonePart = childs[UI.CLONE_PARTS][cloneKey][UI.PARTS][part]
-      console.log('clonePart', clonePart)
-      // Set the value to null for the part and update the base and parent value so it is a new set of parts instead of
+      let clonePart = childs[UI.CLONE_PARTS][cloneKey][UI.PARTS][part] // Set the value to null for the part and update the base and parent value so it is a new set of parts instead of
       // tied to the original
       clonePart = {
         ...clonePart,
@@ -409,9 +407,7 @@ export async function mapFormModelWithData(
 
             // TODO: Remove the dependency on lodash by adding a custom deep clone function
             const objectKey = Object.keys(childs[UI.PART])
-            console.log('objectKeys', objectKey)
             childs = childs[UI.PART][objectKey[0]]
-            console.log('new childs', childs)
             childs[UI.CLONE_PARTS] = cloneDeep(childs[UI.PARTS])
             cleanClonePartData(childs)
           }
@@ -523,7 +519,6 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     [UI.PARTS]: { ...model }
   }
   const test = await mapFormModelWithData(modelUi, documentPod)
-  console.log('final form object', test)
   return test
 }
 
