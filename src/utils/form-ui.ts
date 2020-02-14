@@ -280,10 +280,9 @@ export async function mapData(model: any, dataSource: string): Promise<any> {
  * @param podUri
  * @param childs
  */
-function cleanClonePartData(podUri: string, childs: any) {
+function cleanClonePartData(childs: any) {
   try {
     // Create a new subject for the new cloned parts
-    // const nodeSubject = getSubjectLinkId(podUri)
 
     Object.keys(childs[UI.CLONE_PARTS]).forEach((key, index) => {
       if (index !== 0) {
@@ -298,24 +297,18 @@ function cleanClonePartData(podUri: string, childs: any) {
     // causing there to be more than one. It shouldn't matter, though.
     clonePartsKey.forEach(part => {
       // Get the part itself. This should be the group, or the item inside of the multiple
-      const clonePart = childs[UI.CLONE_PARTS][cloneKey][UI.PARTS][part]
-      const clonePartParts = Object.keys(clonePart[UI.PARTS])
-
-      // For each part in the group (or individual multiple)
-      clonePartParts.forEach(subPart => {
-        // Set the value to null for the part and update the base and parent value so it is a new set of parts instead of
-        // tied to the original
-        clonePart[UI.PARTS][subPart] = {
-          ...clonePart[UI.PARTS][subPart],
-          [UI.VALUE]: '',
-          [UI.OLDVALUE]: '',
-          // [UI.BASE]: nodeSubject,
-          parent: {
-            ...clonePart[UI.PARTS][subPart].parent
-            // [UI.VALUE]: nodeSubject
-          }
+      let clonePart = childs[UI.CLONE_PARTS][cloneKey][UI.PARTS][part]
+      console.log('clonePart', clonePart)
+      // Set the value to null for the part and update the base and parent value so it is a new set of parts instead of
+      // tied to the original
+      clonePart = {
+        ...clonePart,
+        [UI.VALUE]: '',
+        [UI.OLDVALUE]: '',
+        parent: {
+          ...clonePart.parent
         }
-      })
+      }
     })
   } catch (error) {
     throw Error(error)
@@ -415,9 +408,12 @@ export async function mapFormModelWithData(
             childs = await partsFields(childs, { fieldObject, property, podUri, value })
 
             // TODO: Remove the dependency on lodash by adding a custom deep clone function
-            // @ts-ignore
-            childs[UI.CLONE_PARTS] = cloneDeep(childs[UI.PART])
-            cleanClonePartData(podUri, childs)
+            const objectKey = Object.keys(childs[UI.PART])
+            console.log('objectKeys', objectKey)
+            childs = childs[UI.PART][objectKey[0]]
+            console.log('new childs', childs)
+            childs[UI.CLONE_PARTS] = cloneDeep(childs[UI.PARTS])
+            cleanClonePartData(childs)
           }
         }
 
@@ -526,7 +522,9 @@ export async function convertFormModel(documentUri: any, documentPod: any) {
     },
     [UI.PARTS]: { ...model }
   }
-  return mapFormModelWithData(modelUi, documentPod)
+  const test = await mapFormModelWithData(modelUi, documentPod)
+  console.log('final form object', test)
+  return test
 }
 
 /**
