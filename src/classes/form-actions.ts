@@ -1,8 +1,9 @@
 import uuid from 'uuid'
 import data from '@solid/query-ldflex'
 import { namedNode } from '@rdfjs/data-model'
-import { NS, RDF, UI } from '@constants'
+import { UI } from '@constants'
 import { validator } from '@utils'
+import { cloneDeep } from 'lodash'
 
 /**
  * FormAction class to managament Form Model forms on solid
@@ -24,7 +25,6 @@ export class FormActions {
    */
   static cleanFieldNode = (field: any) => {
     let updatedField = field
-
     if (updatedField && updatedField[UI.PARTS]) {
       for (const childKey in updatedField[UI.PARTS]) {
         updatedField = {
@@ -144,17 +144,6 @@ export class FormActions {
         } else {
           throw new Error('Validation failed')
         }
-        /**
-         * Update ui:value and  ui:oldValue on formModel and reset formObject
-         */
-        // Something in this function is going wrong for Groups and is NOT updating the value correctly.
-        // This is only called on save
-        await this.updateFieldModel(
-          validatedField[UI.NAME],
-          isType ? validatedField[UI.VALUE] : validatedField.value,
-          validatedField[UI.VALID],
-          validatedField[UI.DEFAULT_ERROR]
-        )
       }
     }
     this.resetFormObject()
@@ -180,69 +169,6 @@ export class FormActions {
    */
   resetFormObject = () => {
     this.formObject = {}
-  }
-  /**
-   * Field field object into Form Model
-   */
-  updateFieldModel = async (
-    name: string,
-    newValue: string,
-    valid: boolean = true,
-    errorMessage: string
-  ) => {
-    const partsObject = this.formModel[UI.PARTS]
-    let found = false
-
-    // In some iteration of this function, the value is being lost
-    // This needs to be fixed so newly created groups can be deleted
-    function findRecursive(name: string, value: string, model: any): any {
-      for (const fieldKey in model) {
-        const partsKey = model[fieldKey][UI.PART] ? UI.PART : UI.PARTS
-        if (model[fieldKey][UI.NAME] === name) {
-          model = {
-            ...model,
-            [fieldKey]: {
-              ...model[fieldKey],
-              [UI.VALUE]: newValue,
-              [UI.OLDVALUE]: newValue !== '' ? newValue : model[fieldKey][UI.OLDVALUE],
-              [UI.VALID]: valid,
-              [UI.DEFAULT_ERROR]: errorMessage
-            }
-          }
-          found = true
-          break
-        } else if (model[fieldKey][UI.PARTS] || model[fieldKey][UI.PART]) {
-          const parts = model[fieldKey][UI.PARTS] || model[fieldKey][UI.PART]
-          model = {
-            ...model,
-            [fieldKey]: {
-              ...model[fieldKey],
-              [partsKey]: {
-                ...model[fieldKey][partsKey],
-                ...findRecursive(name, value, parts)
-              }
-            }
-          }
-
-          if (found) {
-            break
-          }
-        }
-      }
-
-      return model
-    }
-    try {
-      const updatedModel = findRecursive(name, newValue, partsObject)
-      /**
-       * Update private formModel store
-       */
-      this.formModel = { ...this.formModel, [UI.PARTS]: { ...updatedModel } }
-
-      return this.formModel
-    } catch (error) {
-      return Error(error)
-    }
   }
 
   /**
@@ -353,57 +279,34 @@ export class FormActions {
           const uniqueName = uuid()
 
           const parentProperty = currentField[UI.PROPERTY]
-          const parts = currentField[UI.CLONE_PARTS][copiedField]
+          const parts = cloneDeep(currentField[UI.CLONE_PARTS][copiedField])
+          const cleanedNodes = FormActions.cleanFieldNode(parts)
 
-          // Add the new set of parts, copied from cloneParts node, into the model and return
-          model = {
-            ...model,
-            [fieldKey]: {
-              ...currentField,
-              [UI.PART]: {
-                ...currentField[UI.PART],
-                [uniqueName]: {
-                  ...FormActions.cleanFieldNode(parts),
-                  [UI.NAME]: uniqueName,
-                  [UI.VALUE]: idLink,
-                  [UI.PARENT_PROPERTY]: parentProperty
-                }
-              }
-            }
+          let partsNode = currentField[UI.PART]
+          partsNode[uniqueName] = {
+            ...cleanedNodes,
+            [UI.NAME]: uniqueName,
+            [UI.VALUE]: idLink,
+            [UI.PARENT_PROPERTY]: parentProperty
           }
 
-          const partsList = model[fieldKey][UI.PART][uniqueName][UI.PARTS]
+          const partsList = currentField[UI.PART][uniqueName][UI.PARTS]
 
           Object.keys(partsList).forEach(item => {
             partsList[item].parent = {
-              [UI.VALUE]: idLink,
+              ...partsList[item].parent,
               [UI.PARENT_PROPERTY]: currentField[UI.PROPERTY],
-              [UI.BASE]: currentField[UI.BASE]
+              // [UI.BASE]: idLink,
+              [UI.VALUE]: idLink
             }
-            // TODO: Refactor this so it's not necessary, and so saving uses the parent Group's ".parent" object instead
-            // This set of loops makes sure that the idLink is set for the individual parts, so when they are saved
-            // the value looks at the correct node
-            Object.keys(partsList[item][UI.PARTS]).forEach(subItem => {
-              const subPart = partsList[item][UI.PARTS][subItem]
-              subPart[UI.BASE] = idLink
-              subPart.parent = {
-                ...partsList[item][UI.PARTS][subItem].parent,
-                [UI.VALUE]: idLink
-              }
-            })
-          })
-
-          // The value holds the subject for the node, but this is being lost somewhere in translation so I'm storing that in UI:BASE for now
-          const newValueObj = model[fieldKey][UI.PART][uniqueName]
-          Object.keys(newValueObj[UI.PARTS]).forEach(key => {
-            // @ts-ignore
-            newValueObj[UI.PARTS][key][UI.BASE] = idLink
+            partsList[item][UI.BASE] = idLink
           })
 
           found = true
           break
         }
       }
+
       return model
     }
 

@@ -278,7 +278,7 @@ export async function mapData(model: any, dataSource: string): Promise<any> {
  * This function is designed to clean the cloned fields of any values. In some code paths, the clone parts are coming
  * from existing parts lists, and the values and subjects need to be cleaned and regenerated
  * @param podUri
- * @param children
+ * @param children - List of children parts used to create a clone
  */
 function cleanClonePartData(children: any) {
   try {
@@ -291,20 +291,24 @@ function cleanClonePartData(children: any) {
     })
 
     const cloneKey = Object.keys(children[UI.CLONE_PARTS])[0]
-    const clonePartsKey = Object.keys(children[UI.CLONE_PARTS][cloneKey][UI.PARTS])
+    const partsKey = children[UI.CLONE_PARTS][cloneKey][UI.PART] ? UI.PART : UI.PARTS
+    const clonePartsKey =
+      children[UI.CLONE_PARTS][cloneKey][UI.PART] || children[UI.CLONE_PARTS][cloneKey][UI.PARTS]
+        ? Object.keys(children[UI.CLONE_PARTS][cloneKey][partsKey])
+        : []
 
     // Loop over all of the subjects in the cloneParts array. There should only be one, but there may be a bug
     // causing there to be more than one. It shouldn't matter, though.
     clonePartsKey.forEach(part => {
       // Get the part itself. This should be the group, or the item inside of the multiple
-      let clonePart = children[UI.CLONE_PARTS][cloneKey][UI.PARTS][part] // Set the value to null for the part and update the base and parent value so it is a new set of parts instead of
+      // Set the value to null for the part and update the base and parent value so it is a new set of parts instead of
       // tied to the original
-      clonePart = {
-        ...clonePart,
+      children[UI.CLONE_PARTS][cloneKey][UI.PARTS][part] = {
+        ...children[UI.CLONE_PARTS][cloneKey][UI.PARTS][part],
         [UI.VALUE]: '',
         [UI.OLDVALUE]: '',
         parent: {
-          ...clonePart.parent
+          ...children[UI.CLONE_PARTS][cloneKey][UI.PARTS][part].parent
         }
       }
     })
@@ -407,8 +411,7 @@ export async function mapFormModelWithData(
 
             // TODO: Remove the dependency on lodash by adding a custom deep clone function
             const objectKey = Object.keys(children[UI.PART])
-            children = children[UI.PART][objectKey[0]]
-            children[UI.CLONE_PARTS] = cloneDeep(children[UI.PARTS])
+            children[UI.CLONE_PARTS] = cloneDeep(children[UI.PART][objectKey[0]][UI.PARTS])
             cleanClonePartData(children)
           }
         }
