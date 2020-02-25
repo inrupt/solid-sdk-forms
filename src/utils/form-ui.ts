@@ -187,13 +187,13 @@ function subjectPrefix(document: string) {
   return `${document}#`
 }
 
-async function partsFields(childs: any, options: any) {
+async function partsFields(children: any, options: any) {
   const uniqueName = uuid()
   const { fieldObject, value, property, podUri } = options
   const partsKey = fieldObject[UI.PART] ? UI.PART : UI.PARTS
   return {
     [partsKey]: {
-      ...childs[partsKey],
+      ...children[partsKey],
       [uniqueName]: {
         [UI.NAME]: uniqueName,
         [UI.VALUE]: value,
@@ -278,44 +278,39 @@ export async function mapData(model: any, dataSource: string): Promise<any> {
  * This function is designed to clean the cloned fields of any values. In some code paths, the clone parts are coming
  * from existing parts lists, and the values and subjects need to be cleaned and regenerated
  * @param podUri
- * @param childs
+ * @param children - List of children parts used to create a clone
  */
-function cleanClonePartData(podUri: string, childs: any) {
+function cleanClonePartData(children: any) {
   try {
     // Create a new subject for the new cloned parts
-    // const nodeSubject = getSubjectLinkId(podUri)
 
-    Object.keys(childs[UI.CLONE_PARTS]).forEach((key, index) => {
+    Object.keys(children[UI.CLONE_PARTS]).forEach((key, index) => {
       if (index !== 0) {
-        delete childs[UI.CLONE_PARTS][key]
+        delete children[UI.CLONE_PARTS][key]
       }
     })
 
-    const cloneKey = Object.keys(childs[UI.CLONE_PARTS])[0]
-    const clonePartsKey = Object.keys(childs[UI.CLONE_PARTS][cloneKey][UI.PARTS])
+    const cloneKey = Object.keys(children[UI.CLONE_PARTS])[0]
+    const partsKey = children[UI.CLONE_PARTS][cloneKey][UI.PART] ? UI.PART : UI.PARTS
+    const clonePartsKey =
+      children[UI.CLONE_PARTS][cloneKey][UI.PART] || children[UI.CLONE_PARTS][cloneKey][UI.PARTS]
+        ? Object.keys(children[UI.CLONE_PARTS][cloneKey][partsKey])
+        : []
 
     // Loop over all of the subjects in the cloneParts array. There should only be one, but there may be a bug
     // causing there to be more than one. It shouldn't matter, though.
     clonePartsKey.forEach(part => {
       // Get the part itself. This should be the group, or the item inside of the multiple
-      const clonePart = childs[UI.CLONE_PARTS][cloneKey][UI.PARTS][part]
-      const clonePartParts = Object.keys(clonePart[UI.PARTS])
-
-      // For each part in the group (or individual multiple)
-      clonePartParts.forEach(subPart => {
-        // Set the value to null for the part and update the base and parent value so it is a new set of parts instead of
-        // tied to the original
-        clonePart[UI.PARTS][subPart] = {
-          ...clonePart[UI.PARTS][subPart],
-          [UI.VALUE]: '',
-          [UI.OLDVALUE]: '',
-          // [UI.BASE]: nodeSubject,
-          parent: {
-            ...clonePart[UI.PARTS][subPart].parent
-            // [UI.VALUE]: nodeSubject
-          }
+      // Set the value to null for the part and update the base and parent value so it is a new set of parts instead of
+      // tied to the original
+      children[UI.CLONE_PARTS][cloneKey][UI.PARTS][part] = {
+        ...children[UI.CLONE_PARTS][cloneKey][UI.PARTS][part],
+        [UI.VALUE]: '',
+        [UI.OLDVALUE]: '',
+        parent: {
+          ...children[UI.CLONE_PARTS][cloneKey][UI.PARTS][part].parent
         }
-      })
+      }
     })
   } catch (error) {
     throw Error(error)
@@ -363,7 +358,7 @@ export async function mapFormModelWithData(
     const hasParts = fieldObject[UI.PARTS] || fieldObject[UI.PART]
 
     let parentValue = ''
-    let childs: any = {}
+    let children: any = {}
     let updatedField: any = []
     let parentObject: any = null
 
@@ -412,20 +407,20 @@ export async function mapFormModelWithData(
           for await (let fieldData of data[podUri][property]) {
             const { value } = fieldData
             groupHasExistingParts = true
-            childs = await partsFields(childs, { fieldObject, property, podUri, value })
+            children = await partsFields(children, { fieldObject, property, podUri, value })
 
             // TODO: Remove the dependency on lodash by adding a custom deep clone function
-            // @ts-ignore
-            childs[UI.CLONE_PARTS] = cloneDeep(childs[UI.PART])
-            cleanClonePartData(podUri, childs)
+            const objectKey = Object.keys(children[UI.PART])
+            children[UI.CLONE_PARTS] = cloneDeep(children[UI.PART][objectKey[0]][UI.PARTS])
+            cleanClonePartData(children)
           }
         }
 
         if (!groupHasExistingParts) {
           const idLink = getSubjectLinkId(podUri)
-          childs = await partsFields(childs, { fieldObject, property, podUri, value: idLink })
+          children = await partsFields(children, { fieldObject, property, podUri, value: idLink })
           // @ts-ignore
-          childs[UI.CLONE_PARTS] = cloneDeep(childs[UI.PART])
+          children[UI.CLONE_PARTS] = cloneDeep(children[UI.PART])
         }
       }
 
@@ -484,7 +479,7 @@ export async function mapFormModelWithData(
           [fieldValue]: {
             ...fieldObject,
             ...objectValue,
-            ...childs
+            ...children
           }
         }
 
