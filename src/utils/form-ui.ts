@@ -410,6 +410,9 @@ export async function mapFormModelWithData(
             children = await partsFields(children, { fieldObject, property, podUri, value })
 
             // TODO: Remove the dependency on lodash by adding a custom deep clone function
+            if (!children[UI.PART]) {
+              throw new Error('Error rendering Form Model - Multiple has no part property')
+            }
             const objectKey = Object.keys(children[UI.PART])
             children[UI.CLONE_PARTS] = cloneDeep(children[UI.PART][objectKey[0]][UI.PARTS])
             cleanClonePartData(children)
