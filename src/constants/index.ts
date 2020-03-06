@@ -109,6 +109,7 @@ export const NS = {
   UI: {
     TimeField: `${nsBase}TimeField`,
     MultipleField: `${nsBase}Multiple`,
-    GroupField: `${nsBase}Group`
+    GroupField: `${nsBase}Group`,
+    Label: `${nsBase}label`
   }
 }
