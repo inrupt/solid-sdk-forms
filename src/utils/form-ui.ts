@@ -101,7 +101,7 @@ async function getPropertyValue(field: string, property: string, lang: string = 
   // This is  the recommended way of fetching languages until a more permanent solution is implemented in ldflex
   if (property === NS.UI.Label) {
     let labelValue = ''
-    for await (const label of data.from(updatedProperty)[field][property]) {
+    for await (const label of data.from(updatedProperty)[field][NS.UI.Label]) {
       if (label && label.language === lang) {
         labelValue = label.value
       }
@@ -188,7 +188,6 @@ async function turtleToFormUi(document: any, language: string) {
     ) {
       const label = await findLabel(fields[subjectPrefix][UI.PROPERTY])
       fields = { ...fields, [subjectPrefix]: { ...fields[subjectPrefix], [UI.LABEL]: label } }
-    } else if (fields[subjectPrefix] && fields[subjectPrefix][UI.LABEL]) {
     }
   }
   return fields
