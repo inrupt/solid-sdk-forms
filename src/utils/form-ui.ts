@@ -89,6 +89,8 @@ function getPredicateName(predicate: string): any {
 
 /**
  * Fetch a value for a given subject and property, with special considerations for specific properties
+ * The fetch will look for language strings first and if no language is available it will fall back to the non-language string
+ * It also calls loopList for ui#values, which is a dropdown, and concerts the rdf list into a JS array
  * @param field
  * @param property
  * @param lang
@@ -98,7 +100,8 @@ async function getPropertyValue(field: string, property: string, lang: string = 
   const updatedProperty = changeHostProtocol(field)
 
   // For labels, loop over the values of the property. If there are multiple language values they will be returned here in the for await
-  // This is  the recommended way of fetching languages until a more permanent solution is implemented in ldflex
+  // This is the recommended way of fetching languages until a more permanent solution is implemented in ldflex
+  // Issue Reference: https://github.com/LDflex/LDflex/issues/47
   if (property === NS.UI.Label) {
     let labelValue = ''
     for await (const label of data.from(updatedProperty)[field][NS.UI.Label]) {
