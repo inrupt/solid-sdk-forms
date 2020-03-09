@@ -1,6 +1,6 @@
 import data from '@solid/query-ldflex'
 import uuid from 'uuid'
-import { CONTEXT, RDF, UI } from '@constants'
+import { CONTEXT, NS, RDF, UI } from '@constants'
 import { cloneDeep } from 'lodash'
 
 /**
@@ -87,11 +87,31 @@ function getPredicateName(predicate: string): any {
   return null
 }
 
-async function getPropertyValue(field: string, property: string) {
+/**
+ * Fetch a value for a given subject and property, with special considerations for specific properties
+ * The fetch will look for language strings first and if no language is available it will fall back to the non-language string
+ * It also calls loopList for ui#values, which is a dropdown, and concerts the rdf list into a JS array
+ * @param field
+ * @param property
+ * @param lang
+ */
+async function getPropertyValue(field: string, property: string, lang: string = 'en') {
   let propertyProxy: any
   const updatedProperty = changeHostProtocol(field)
 
-  if (property.includes('ui#values')) {
+  // For labels, loop over the values of the property. If there are multiple language values they will be returned here in the for await
+  // This is the recommended way of fetching languages until a more permanent solution is implemented in ldflex
+  // Issue Reference: https://github.com/LDflex/LDflex/issues/47
+  if (property === NS.UI.Label) {
+    let labelValue = ''
+    for await (const label of data.from(updatedProperty)[field][NS.UI.Label]) {
+      if (label && label.language === lang) {
+        labelValue = label.value
+      }
+    }
+
+    if (labelValue) return labelValue
+  } else if (property.includes('ui#values')) {
     return loopList(data.from(updatedProperty)[field][property])
   }
 
@@ -116,7 +136,7 @@ function changeHostProtocol(property: string) {
  * @param document
  * @param partsPath
  */
-async function turtleToFormUi(document: any) {
+async function turtleToFormUi(document: any, language: string) {
   let fields: any = {}
   const doc = await document
   const partsPath = 'http://www.w3.org/ns/ui#parts'
@@ -135,14 +155,14 @@ async function turtleToFormUi(document: any) {
     const subjectPrefix = `subject:${subjectKey}`
     for await (const property of data[field].properties) {
       let partsFields: any = {}
-      let propertyValue: string = await getPropertyValue(field, property)
+      let propertyValue: string = await getPropertyValue(field, property, language)
       /**
        * If property exist into the subject we added it into the json-ld object
        */
       if (property === partsPath && propertyValue) {
-        partsFields = await turtleToFormUi(data[field])
+        partsFields = await turtleToFormUi(data[field], language)
       } else if (property === partPath) {
-        partsFields = await turtleToFormUi(data[field])
+        partsFields = await turtleToFormUi(data[field], language)
       }
 
       const propertyKey: string = getPredicateName(property)
@@ -514,8 +534,8 @@ export async function mapFormModelWithData(
  * @param documentUri
  * @param partsPath
  */
-export async function convertFormModel(documentUri: any, documentPod: any) {
-  const model = await turtleToFormUi(data[documentUri])
+export async function convertFormModel(documentUri: any, documentPod: any, language: string) {
+  const model = await turtleToFormUi(data[documentUri], language)
   let modelUi = {
     '@context': {
       ...CONTEXT['@context'],
