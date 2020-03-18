@@ -282,6 +282,7 @@ export class FormActions {
           const parts = cloneDeep(currentField[UI.CLONE_PARTS][copiedField])
           const cleanedNodes = FormActions.cleanFieldNode(parts)
 
+          // Updates the new part's name and value, which is a subject for this part
           let partsNode = currentField[UI.PART]
           partsNode[uniqueName] = {
             ...cleanedNodes,
@@ -290,23 +291,34 @@ export class FormActions {
             [UI.PARENT_PROPERTY]: parentProperty
           }
 
-          const partsList = currentField[UI.PART][uniqueName][UI.PARTS]
+          const partsList = partsNode[uniqueName][UI.PARTS]
 
+          // For each part in the parts list, update the parent property to point at the newly generated subject
           Object.keys(partsList).forEach(item => {
             partsList[item].parent = {
               ...partsList[item].parent,
               [UI.PARENT_PROPERTY]: currentField[UI.PROPERTY],
-              // [UI.BASE]: idLink,
+              [UI.BASE]: idLink,
               [UI.VALUE]: idLink
             }
             partsList[item][UI.BASE] = idLink
+
+            // If the partsList has it's own parts (such as a Multiple containing a Group) then update all the sub parts to have the same subject in the value field
+            // When we autosave fields, we get the context of just the field, so each field needs to have a copy of it's subject
+            if (partsList[item][UI.PARTS]) {
+              Object.keys(partsList[item][UI.PARTS]).forEach(subItem => {
+                partsList[item][UI.PARTS][subItem].parent = {
+                  ...partsList[item][UI.PARTS][subItem].parent,
+                  [UI.VALUE]: idLink
+                }
+              })
+            }
           })
 
           found = true
           break
         }
       }
-
       return model
     }
 
