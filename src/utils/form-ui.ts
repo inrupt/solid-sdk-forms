@@ -302,8 +302,6 @@ export async function mapData(model: any, dataSource: string): Promise<any> {
  */
 function cleanClonePartData(children: any) {
   try {
-    // Create a new subject for the new cloned parts
-
     Object.keys(children[UI.CLONE_PARTS]).forEach((key, index) => {
       if (index !== 0) {
         delete children[UI.CLONE_PARTS][key]
@@ -323,15 +321,28 @@ function cleanClonePartData(children: any) {
       // Get the part itself. This should be the group, or the item inside of the multiple
       // Set the value to null for the part and update the base and parent value so it is a new set of parts instead of
       // tied to the original
-      children[UI.CLONE_PARTS][cloneKey][UI.PARTS][part] = {
-        ...children[UI.CLONE_PARTS][cloneKey][UI.PARTS][part],
+      const cloneParts = children[UI.CLONE_PARTS][cloneKey][UI.PARTS]
+      cloneParts[part] = {
+        ...cloneParts[part],
         [UI.VALUE]: '',
-        [UI.OLDVALUE]: '',
-        parent: {
-          ...children[UI.CLONE_PARTS][cloneKey][UI.PARTS][part].parent
-        }
+        [UI.OLDVALUE]: ''
+      }
+
+      if (cloneParts[part][UI.PARTS]) {
+        Object.keys(cloneParts[part][UI.PARTS]).forEach(subPartKey => {
+          cloneParts[part][UI.PARTS][subPartKey] = {
+            ...cloneParts[part][UI.PARTS][subPartKey],
+            [UI.VALUE]: ''
+          }
+
+          // If an old value exists, delete it
+          if (cloneParts[part][UI.PARTS][subPartKey][UI.OLDVALUE]) {
+            delete cloneParts[part][UI.PARTS][subPartKey][UI.OLDVALUE]
+          }
+        })
       }
     })
+    return children
   } catch (error) {
     throw Error(error)
   }
@@ -433,9 +444,8 @@ export async function mapFormModelWithData(
             if (!children[UI.PART]) {
               throw new Error('Error rendering Form Model - Multiple has no part property')
             }
-            const objectKey = Object.keys(children[UI.PART])
-            children[UI.CLONE_PARTS] = cloneDeep(children[UI.PART][objectKey[0]][UI.PARTS])
-            cleanClonePartData(children)
+            children[UI.CLONE_PARTS] = cloneDeep(children[UI.PART])
+            children = cleanClonePartData(children)
           }
         }
 
