@@ -110,6 +110,7 @@ export const NS = {
     TimeField: `${nsBase}TimeField`,
     MultipleField: `${nsBase}Multiple`,
     GroupField: `${nsBase}Group`,
-    Label: `${nsBase}label`
+    Label: `${nsBase}label`,
+    Contents: `${nsBase}contents`
   }
 }
