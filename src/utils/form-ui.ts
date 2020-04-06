@@ -99,18 +99,18 @@ async function getPropertyValue(field: string, property: string, lang: string = 
   let propertyProxy: any
   const updatedProperty = changeHostProtocol(field)
 
-  // For labels, loop over the values of the property. If there are multiple language values they will be returned here in the for await
-  // This is the recommended way of fetching languages until a more permanent solution is implemented in ldflex
+  // For text fields in the form, loop over the values of the property. If there are multiple language values
+  // they will be returned here in the for await. This is the recommended way of fetching languages until a more permanent solution is implemented in ldflex
   // Issue Reference: https://github.com/LDflex/LDflex/issues/47
-  if (property === NS.UI.Label) {
-    let labelValue = ''
-    for await (const label of data.from(updatedProperty)[field][NS.UI.Label]) {
-      if (label && label.language === lang) {
-        labelValue = label.value
+  if (property === NS.UI.Label || property === NS.UI.Contents) {
+    let textValue = ''
+    for await (const text of data.from(updatedProperty)[field][property]) {
+      if (text && text.language === lang) {
+        textValue = text.value
       }
     }
 
-    if (labelValue) return labelValue
+    if (textValue) return textValue
   } else if (property.includes('ui#values')) {
     return loopList(data.from(updatedProperty)[field][property])
   }
