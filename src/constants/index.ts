@@ -33,8 +33,15 @@ export const CONTEXT: any = {
     }
   }
 }
+
+export const RDF = {
+  TYPE: 'rdf:type'
+}
+
 export const UI = {
+  GROUP: 'ui:group',
   PARTS: 'ui:parts',
+  PART: 'ui:part',
   CLONE_PARTS: 'ui:partsClone',
   LABEL: 'ui:label',
   PROPERTY: 'ui:property',
@@ -61,9 +68,49 @@ export const UI = {
   DEFAULT_ERROR: 'ui:defaultError'
 }
 
+export const CONSTRAINTS: any = {
+  nonPositiveInteger: {
+    maxValue: 0
+  },
+  negativeInteger: {
+    maxValue: -1
+  },
+  short: {
+    maxValue: 32767,
+    minValue: -32768
+  },
+  byte: {
+    maxValue: 127,
+    minValue: -128
+  },
+  nonNegativeInteger: {
+    minValue: 0
+  },
+  unsignedLong: {
+    minValue: 0
+  },
+  unsignedInt: {
+    minValue: 0
+  },
+  unsignedShort: {
+    minValue: 0
+  },
+  unsignedByte: {
+    maxValue: 255,
+    minValue: 0
+  },
+  positiveInteger: {
+    minValue: 1
+  }
+}
+
 const nsBase = 'http://www.w3.org/ns/ui#'
 export const NS = {
   UI: {
-    TimeField: `${nsBase}TimeField`
+    TimeField: `${nsBase}TimeField`,
+    MultipleField: `${nsBase}Multiple`,
+    GroupField: `${nsBase}Group`,
+    Label: `${nsBase}label`,
+    Contents: `${nsBase}contents`
   }
 }
