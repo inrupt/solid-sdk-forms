@@ -10,7 +10,7 @@ on:
 
 jobs:
   whitesource:
-    runs-on: ubuntu:18.04
+    runs-on: ubuntu-18.04
     name: Whitesource security scan
     steps:
       # Setup
