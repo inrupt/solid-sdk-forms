@@ -10,7 +10,7 @@ on:
 
 jobs:
   whitesource:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu:18.04
     name: Whitesource security scan
     steps:
       # Setup
@@ -51,4 +51,3 @@ jobs:
         with:
           path: whitesource/policyRejectionSummary.json
           name: whitesource-logs
-
