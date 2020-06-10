@@ -17,3 +17,5 @@ declare module 'ldflex' {
   const data: any
   export default data
 }
+
+declare module '@inrupt/lit-generated-vocab-common'

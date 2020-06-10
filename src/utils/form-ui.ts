@@ -1,7 +1,8 @@
 import data from '@solid/query-ldflex'
 import uuid from 'uuid'
-import { CONTEXT, NS, RDF, UI } from '@constants'
+import { CONTEXT, UI } from '../constants/index'
 import { cloneDeep } from 'lodash'
+import { RDF } from '@inrupt/lit-generated-vocab-common'
 
 /**
  * Find prefix context to add into object property
@@ -81,7 +82,8 @@ function getPredicateName(predicate: string): any {
   }
 
   if (predicate.lastIndexOf('ui:')) {
-    return `${prefix}${predicate.split('ui:')[1]}`
+    throw new Error(`Should never have prefixed names now - got [${predicate}]`)
+    // return `${prefix}${predicate.split('ui:')[1]}`
   }
 
   return null
@@ -102,7 +104,7 @@ async function getPropertyValue(field: string, property: string, lang: string = 
   // For text fields in the form, loop over the values of the property. If there are multiple language values
   // they will be returned here in the for await. This is the recommended way of fetching languages until a more permanent solution is implemented in ldflex
   // Issue Reference: https://github.com/LDflex/LDflex/issues/47
-  if (property === NS.UI.Label || property === NS.UI.Contents) {
+  if (property === UI.LABEL || property === UI.CONTENTS) {
     let textValue = ''
     for await (const text of data.from(updatedProperty)[field][property]) {
       if (text && text.language === lang) {
@@ -282,7 +284,7 @@ export async function mapData(model: any, dataSource: string): Promise<any> {
   Object.keys(model[UI.PARTS]).map(async subject => {
     let value = model[UI.PARTS][subject]
     /* if there is a inner group then we call recursively */
-    if (value[RDF.TYPE] === 'http://www.w3.org/ns/ui#Group') {
+    if (value[RDF.type] === 'http://www.w3.org/ns/ui#Group') {
       await mapData(value, dataSource)
     } else {
       /* if this is a non-group field then we look for the value in the source and assign it to 'ui:value' */
@@ -384,8 +386,8 @@ export async function mapFormModelWithData(
   for await (const fieldValue of fields) {
     let fieldObject = parts[fieldValue]
     let property = fieldObject[UI.PROPERTY]
-    const isMultiple = fieldObject['rdf:type'].includes('Multiple')
-    const isGroup = fieldObject['rdf:type'].includes('Group')
+    const isMultiple = fieldObject[RDF.type].includes('Multiple')
+    const isGroup = fieldObject[RDF.type].includes('Group')
     const hasParts = fieldObject[UI.PARTS] || fieldObject[UI.PART]
 
     let parentValue = ''
@@ -399,7 +401,7 @@ export async function mapFormModelWithData(
      */
     if (property) {
       const newProperty = property.replace(/(^\w+:|^)\/\//, `http://`)
-      if (fieldObject['rdf:type'].includes('Classifier')) {
+      if (fieldObject[RDF.type].includes('Classifier')) {
         let result: any
 
         if (fieldObject[UI.VALUES]) {

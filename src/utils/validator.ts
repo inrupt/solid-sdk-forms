@@ -1,6 +1,8 @@
 import moment from 'moment'
 
-import { UI, NS } from '@constants'
+// import { RDF, UI } from '@inrupt/lit-generated-vocab-common';
+import { RDF } from '@inrupt/lit-generated-vocab-common'
+import { UI } from '@constants'
 
 const actionMethod = (condition: boolean, message: string) => {
   return {
@@ -35,14 +37,14 @@ export const validators = [
   {
     name: UI.MIN_VALUE,
     action: (field: any) => {
-      if (field['rdf:type'].includes('Date')) {
+      if (field[RDF.type].includes('Date')) {
         return actionMethod(
           moment(field.value).isSameOrAfter(moment(field[UI.MIN_VALUE])),
           field[UI.VALIDATION_ERROR]
         )
       }
 
-      if (field['rdf:type'] === NS.UI.TimeField) {
+      if (field[RDF.type] === UI.TIME_FIELD) {
         const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
         const [minHour, minMinute, minSecond] = field[UI.MIN_VALUE]
           .split(':')
@@ -68,13 +70,13 @@ export const validators = [
   {
     name: UI.MAX_VALUE,
     action: (field: any) => {
-      if (field['rdf:type'].includes('Date')) {
+      if (field[RDF.type].includes('Date')) {
         return actionMethod(
           moment(field.value).isSameOrBefore(moment(field[UI.MAX_VALUE])),
           field[UI.VALIDATION_ERROR]
         )
       }
-      if (field['rdf:type'] === NS.UI.TimeField) {
+      if (field[RDF.type] === UI.TIME_FIELD) {
         const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
         const [maxHour, maxMinute, maxSecond] = field[UI.MAX_VALUE]
           .split(':')
