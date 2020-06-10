@@ -1,6 +1,6 @@
 {
   "name": "@inrupt/solid-sdk-forms",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "homepage": "https://solidproject.org",
   "description": "Solid library for converting and generating Forms",
   "keywords": [],
@@ -160,6 +160,7 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
+    "@inrupt/lit-generated-vocab-common": "^0.3.9",
     "@solid/query-ldflex": "^2.6.0",
     "@types/lodash": "^4.14.149",
     "bufferutil": "^4.0.1",
