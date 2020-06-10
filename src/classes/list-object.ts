@@ -1,4 +1,4 @@
-import { NS_RDF } from '@constants'
+import { NS_RDF } from '../constants/index'
 
 export class ListObject {
   NS_Rdf: string

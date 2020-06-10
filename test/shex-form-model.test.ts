@@ -13,13 +13,13 @@ const iri = 'https://shexshapes.inrupt.net/public/userprofile.shex#UserProfile'
 
 describe('ShexFormModel', () => {
   it('should return node name', () => {
-    const instance = new ShexFormModel(schema)
+    const instance = new ShexFormModel(schema, 'Unused Param!')
 
     expect(instance.localName(iri)).toEqual(`<${iri}>`)
   })
 
   it('should return shape object', () => {
-    const instance = new ShexFormModel(schema)
+    const instance = new ShexFormModel(schema, 'Unused Param!')
     const shape = instance.findShapeExpression(shapeId)
 
     expect(shape).toEqual({ id: 'https://example.org/example.shex#ExampleShape', type: 'Shape' })

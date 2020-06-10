@@ -1,9 +1,9 @@
 import shexParser from '@shexjs/parser'
 import shexCore from '@shexjs/core'
 import * as N3 from 'n3'
-import { ShExRSchema } from '@schemas'
-import { solidFetch } from '@utils'
-import { SHEX_SCHEMA } from '@constants'
+import { ShExRSchema } from '../schemas/shexRs'
+import { fetchSchema } from '../utils/solid-fetch'
+import { SHEX_SCHEMA } from '../constants/index'
 import { ShexFormModel } from './shex-form-model'
 
 export class FormModel {
@@ -80,7 +80,8 @@ export class FormModel {
    */
   parseSchema = async (url: string) => {
     try {
-      const schemaText = await solidFetch.fetchSchema(url)
+      // const schemaText = await solidFetch.fetchSchema(url)
+      const schemaText = await fetchSchema(url)
       const format = this.schemaType(url)
       let schema
       switch (format.toLowerCase()) {

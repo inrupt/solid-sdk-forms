@@ -9,7 +9,7 @@ import {
   EACH_OF,
   NODE_CONSTRAINT,
   CONSTRAINTS
-} from '@constants'
+} from '../constants/index'
 import { Meta } from '@interfaces'
 import { ListObject } from './list-object'
 import { namedNode } from '@rdfjs/data-model'
