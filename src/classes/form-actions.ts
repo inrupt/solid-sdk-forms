@@ -1,7 +1,7 @@
 import uuid from 'uuid'
 import data from '@solid/query-ldflex'
 import { namedNode } from '@rdfjs/data-model'
-import { UI } from '@constants'
+import { UI } from '@solid/lit-vocab-common'
 import { validator } from '@utils'
 import { cloneDeep } from 'lodash'
 
@@ -25,14 +25,14 @@ export class FormActions {
    */
   static cleanFieldNode = (field: any) => {
     let updatedField = field
-    if (updatedField && updatedField[UI.PARTS]) {
-      for (const childKey in updatedField[UI.PARTS]) {
+    if (updatedField && updatedField[UI.parts]) {
+      for (const childKey in updatedField[UI.parts]) {
         updatedField = {
           ...updatedField,
-          [UI.PARTS]: {
-            ...updatedField[UI.PARTS],
+          [UI.parts]: {
+            ...updatedField[UI.parts],
             [childKey]: {
-              ...updatedField[UI.PARTS][childKey],
+              ...updatedField[UI.parts][childKey],
               ...FormActions.cleanFieldNode(updatedField[childKey])
             }
           }
@@ -42,9 +42,9 @@ export class FormActions {
 
     return {
       ...updatedField,
-      [UI.VALUE]: '',
-      [UI.OLDVALUE]: '',
-      [UI.NAME]: uuid()
+      [UI.value]: '',
+      [UI.oldValue]: '',
+      [UI.name]: uuid()
     }
   }
   /**
@@ -57,7 +57,7 @@ export class FormActions {
   }
 
   validator = (field: any) => {
-    let updatedField = { ...field, [UI.VALID]: true }
+    let updatedField = { ...field, [UI.valid]: true }
 
     try {
       for (const currentValidator of validator.validators) {
@@ -66,8 +66,8 @@ export class FormActions {
           if (!valid) {
             updatedField = {
               ...updatedField,
-              [UI.VALID]: valid,
-              [UI.DEFAULT_ERROR]: errorMessage
+              [UI.valid]: valid,
+              [UI.defaultError]: errorMessage
             }
             break
           }
@@ -99,47 +99,47 @@ export class FormActions {
         validatedField = this.validator(currentField)
 
         // Store if the field is a "Type" field
-        const isType = currentField[UI.PROPERTY].includes('type')
+        const isType = currentField[UI.property].includes('type')
 
         // If the field is valid
-        if (validatedField[UI.VALID]) {
-          const predicate = currentField[UI.PROPERTY]
+        if (validatedField[UI.valid]) {
+          const predicate = currentField[UI.property]
           let podData
 
           // Set the field copy object's value to a link to the value (if it is a type field) or the original object's value
-          validatedField[UI.VALUE] = isType ? namedNode(currentField.value) : currentField.value
+          validatedField[UI.value] = isType ? namedNode(currentField.value) : currentField.value
 
           // Hack to support booleans in LDFlex. LDFlex does not properly recognize boolean types, so we convert it to a string
           const updatedValue =
-            typeof validatedField[UI.VALUE] === 'boolean'
-              ? validatedField[UI.VALUE].toString()
-              : validatedField[UI.VALUE]
+            typeof validatedField[UI.value] === 'boolean'
+              ? validatedField[UI.value].toString()
+              : validatedField[UI.value]
 
           // If the field has a parent - this would happen if it is a part of a Group, so we can create new nodes for the Group to live in
           if (currentField.parent) {
             podData = isType
-              ? data[currentField.parent[UI.VALUE]].type
-              : data[currentField.parent[UI.VALUE]][predicate]
+              ? data[currentField.parent[UI.value]].type
+              : data[currentField.parent[UI.value]][predicate]
 
             // If there's no old value, this is a new field, so create the new node for it
-            if (currentField[UI.OLDVALUE] && currentField[UI.OLDVALUE] !== '') {
+            if (currentField[UI.oldValue] && currentField[UI.oldValue] !== '') {
               await podData.set(updatedValue)
-              currentField[UI.VALUE] = updatedValue
+              currentField[UI.value] = updatedValue
             } else {
               const { parent } = currentField
-              await data[parent[UI.BASE]][parent[UI.PARENT_PROPERTY]].add(
-                namedNode(parent[UI.VALUE])
+              await data[parent[UI.base]][parent[UI.parentProperty]].add(
+                namedNode(parent[UI.value])
               )
               await podData.add(updatedValue)
-              currentField[UI.VALUE] = updatedValue
+              currentField[UI.value] = updatedValue
             }
           } else {
             podData = isType
-              ? data[currentField[UI.BASE]].type
-              : data[currentField[UI.BASE]][predicate]
+              ? data[currentField[UI.base]].type
+              : data[currentField[UI.base]][predicate]
 
             await podData.set(updatedValue)
-            currentField[UI.VALUE] = updatedValue
+            currentField[UI.value] = updatedValue
           }
         } else {
           throw new Error('Validation failed')
@@ -154,13 +154,13 @@ export class FormActions {
    */
   static deleteFieldPod = async (field: any) => {
     // We need a base which serves as the subject for the field to delete
-    if (field[UI.BASE]) {
+    if (field[UI.base]) {
       // If there is a parent_property we are deleting a full namedNode, like an address, not just a field
-      if (field[UI.PARENT_PROPERTY]) {
-        await data[field[UI.BASE]][field[UI.PARENT_PROPERTY]].delete(namedNode(field[UI.VALUE]))
+      if (field[UI.parentProperty]) {
+        await data[field[UI.base]][field[UI.parentProperty]].delete(namedNode(field[UI.value]))
       } else {
         // TODO: for newly added groups,
-        await data[field[UI.BASE]][field[UI.PROPERTY]].delete(field[UI.VALUE])
+        await data[field[UI.base]][field[UI.property]].delete(field[UI.value])
       }
     }
   }
@@ -176,7 +176,7 @@ export class FormActions {
    * This function recursively traverses the entire form model object to find the field to delete
    */
   deleteField = async (field: string) => {
-    const partsObject = this.formModel[UI.PARTS]
+    const partsObject = this.formModel[UI.parts]
     let found = false
 
     async function deleteRecursive(field: string, model: any) {
@@ -184,23 +184,23 @@ export class FormActions {
         const modelKeys = Object.keys(model)
         for await (const fieldKey of modelKeys) {
           // If we found the root node to delete
-          if (model[fieldKey][UI.NAME] === field) {
+          if (model[fieldKey][UI.name] === field) {
             // First, loop over all parts, if any, that are contained in this node and delete them first
             const partToDelete = model[fieldKey]
-            const parts = partToDelete[UI.PARTS] || partToDelete[UI.PART]
+            const parts = partToDelete[UI.parts] || partToDelete[UI.part]
 
             // When parts exist, this is a group. In fact, only groups have a delete for now
             if (parts) {
               // Loop over the group - in this case just the parent group
               for (const key of Object.keys(parts)) {
-                const groupParts = partToDelete[UI.PARTS][key][UI.PARTS]
-                await FormActions.deleteFieldPod(partToDelete[UI.PARTS][key])
+                const groupParts = partToDelete[UI.parts][key][UI.parts]
+                await FormActions.deleteFieldPod(partToDelete[UI.parts][key])
 
                 // Loop over each of the group parts and delete them individually. This prevents there
                 // from being orphaned data in the pod
                 for (const groupPartKey of Object.keys(groupParts)) {
                   await FormActions.deleteFieldPod(
-                    partToDelete[UI.PARTS][key][UI.PARTS][groupPartKey]
+                    partToDelete[UI.parts][key][UI.parts][groupPartKey]
                   )
                 }
               }
@@ -215,14 +215,14 @@ export class FormActions {
             model = withoutProperty
             found = true
             break
-          } else if (model[fieldKey][UI.PART]) {
+          } else if (model[fieldKey][UI.part]) {
             // If this is not the node we want to delete, but the node has parts, keep walking the tree recursively
             model = {
               ...model,
               [fieldKey]: {
                 ...model[fieldKey],
-                [UI.PART]: {
-                  ...(await deleteRecursive(field, model[fieldKey][UI.PART]))
+                [UI.part]: {
+                  ...(await deleteRecursive(field, model[fieldKey][UI.part]))
                 }
               }
             }
@@ -242,7 +242,7 @@ export class FormActions {
       /**
        * Update private formModel store
        */
-      this.formModel = { ...this.formModel, [UI.PARTS]: { ...updatedModel } }
+      this.formModel = { ...this.formModel, [UI.parts]: { ...updatedModel } }
 
       return this.formModel
     } catch (error) {
@@ -256,60 +256,60 @@ export class FormActions {
     let found = false
 
     // Get list of parts from the form model
-    let partsObject = this.formModel[UI.PARTS]
+    let partsObject = this.formModel[UI.parts]
 
     function findField(nodeName: string, model: any) {
       for (const fieldKey in model) {
         const currentField = model[fieldKey]
 
         // If we find the right node
-        if (currentField[UI.NAME] === nodeName) {
+        if (currentField[UI.name] === nodeName) {
           // Get the key of the first item in clone parts
-          const copiedField = Object.keys(currentField[UI.CLONE_PARTS])[0]
+          const copiedField = Object.keys(currentField[UI.partsClone])[0]
 
           // Get a new subject based on the existing subject - so the new fields are siblings in the pod
           const idLink = FormActions.getSubjectLinkId(
-            currentField[UI.CLONE_PARTS][copiedField][UI.VALUE]
+            currentField[UI.partsClone][copiedField][UI.value]
           )
 
           // This field is used for deleting and adding immediately, so this be used before a refresh generates the correct value
-          currentField[UI.BASE] = idLink
+          currentField[UI.base] = idLink
 
           // Generate a new unique ID for the form object
           const uniqueName = uuid()
 
-          const parentProperty = currentField[UI.PROPERTY]
-          const parts = cloneDeep(currentField[UI.CLONE_PARTS][copiedField])
+          const parentProperty = currentField[UI.property]
+          const parts = cloneDeep(currentField[UI.partsClone][copiedField])
           const cleanedNodes = FormActions.cleanFieldNode(parts)
 
           // Updates the new part's name and value, which is a subject for this part
-          let partsNode = currentField[UI.PART]
+          let partsNode = currentField[UI.part]
           partsNode[uniqueName] = {
             ...cleanedNodes,
-            [UI.NAME]: uniqueName,
-            [UI.VALUE]: idLink,
-            [UI.PARENT_PROPERTY]: parentProperty
+            [UI.name]: uniqueName,
+            [UI.value]: idLink,
+            [UI.parentProperty]: parentProperty
           }
 
-          const partsList = partsNode[uniqueName][UI.PARTS]
+          const partsList = partsNode[uniqueName][UI.parts]
 
           // For each part in the parts list, update the parent property to point at the newly generated subject
           Object.keys(partsList).forEach(item => {
             partsList[item].parent = {
               ...partsList[item].parent,
-              [UI.PARENT_PROPERTY]: currentField[UI.PROPERTY],
-              [UI.BASE]: idLink,
-              [UI.VALUE]: idLink
+              [UI.parentProperty]: currentField[UI.property],
+              [UI.base]: idLink,
+              [UI.value]: idLink
             }
-            partsList[item][UI.BASE] = idLink
+            partsList[item][UI.base] = idLink
 
             // If the partsList has it's own parts (such as a Multiple containing a Group) then update all the sub parts to have the same subject in the value field
             // When we autosave fields, we get the context of just the field, so each field needs to have a copy of it's subject
-            if (partsList[item][UI.PARTS]) {
-              Object.keys(partsList[item][UI.PARTS]).forEach(subItem => {
-                partsList[item][UI.PARTS][subItem].parent = {
-                  ...partsList[item][UI.PARTS][subItem].parent,
-                  [UI.VALUE]: idLink
+            if (partsList[item][UI.parts]) {
+              Object.keys(partsList[item][UI.parts]).forEach(subItem => {
+                partsList[item][UI.parts][subItem].parent = {
+                  ...partsList[item][UI.parts][subItem].parent,
+                  [UI.value]: idLink
                 }
               })
             }
@@ -324,6 +324,6 @@ export class FormActions {
 
     const updatedParts = findField(nodeName, partsObject)
 
-    return { ...this.formModel, [UI.PARTS]: { ...updatedParts } }
+    return { ...this.formModel, [UI.parts]: { ...updatedParts } }
   }
 }

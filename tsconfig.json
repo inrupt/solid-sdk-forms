@@ -17,7 +17,6 @@
     ],
     "baseUrl": "./",
     "paths": {
-      "@constants": ["src/constants"],
       "@utils": ["src/utils"],
       "@interfaces": ["src/interfaces"],
       "@schemas": ["src/schemas"]

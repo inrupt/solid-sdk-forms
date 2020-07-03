@@ -1,5 +1,6 @@
 import auth from 'solid-auth-client'
 import data from '@solid/query-ldflex'
+import { VCARD } from '@solid/lit-vocab-common'
 
 interface FetchRequest {
   status: number
@@ -94,8 +95,8 @@ export const fetchLdflexDocument = async (documentUri: RequestInfo) => {
 export const getBasicPod = async (webId: string) => {
   try {
     if (webId) {
-      const nameData = await data[webId]['vcard:fn']
-      const imageData = await data[webId]['vcard:hasPhoto']
+      const nameData = await data[webId][VCARD.fn]
+      const imageData = await data[webId][VCARD.hasPhoto]
       const name = nameData ? nameData.value : webId
       const image = imageData ? imageData.value : null
       return { name, image, webId }

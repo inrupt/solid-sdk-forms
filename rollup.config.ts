@@ -38,7 +38,7 @@ export default {
     // Allow bundling cjs modules (unlike webpack, rollup doesn't understand cjs)
     commonjs({
       // exclude: './node_modules/**',
-      include: 'node_modules/**', 
+      include: 'node_modules/**',
       namedExports: {
       'node_modules/@solid/query-ldflex/dist/solid-query-ldflex.bundle.js': [ 'data' ],
       'node_modules/@shexjs/parser/shex-parser.js': ['shexParser'],
@@ -56,7 +56,6 @@ export default {
       resolve: ['.ts'],
       entries:[
         { find:'@alias', replacement: 'src/utils' },
-        { find:'@constants', replacement: 'src/constants' },
         { find:'@interfaces', replacement: 'src/interfaces' },
         { find:'@schemas', replacement: 'src/schemas' }
       ]

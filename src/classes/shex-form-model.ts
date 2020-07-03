@@ -1,10 +1,7 @@
 import { DataFactory, Store, Writer } from 'n3'
+import { RDF, XSD, DCTERMS, UI } from '@solid/lit-vocab-common'
 import {
-  NS_RDF,
-  NS_DC,
-  NS_UI,
   NS_LAYOUT,
-  IRI_XsdString,
   TRIPLE_CONSTRAINT,
   EACH_OF,
   NODE_CONSTRAINT,
@@ -29,12 +26,12 @@ export class ShexFormModel {
     this.termFactory = DataFactory
     this.graph = new Store()
     this.meta = { prefixes: schema._prefixes, base: window.location.href }
-    this.iriRdftype = `${NS_RDF}type`
-    this.iriDctitle = `${NS_DC}title`
+    this.iriRdftype = RDF.type
+    this.iriDctitle = DCTERMS.title
     this.iriUitype = this.iriRdftype
   }
 
-  getSubjectNode(term: string) {
+  getSubjectNode(term: string): ReturnType<typeof namedNode> {
     return namedNode(`#${term}`)
   }
 
@@ -72,14 +69,14 @@ export class ShexFormModel {
       ? false
       : this.graph.addQuad(
           this.getSubjectNode(fieldTerm.id),
-          namedNode(`${NS_UI}maxValue`),
+          UI.maxValue,
           this.jsonLdtoRdf({ value: maxValue })
         )
     isNaN(minValue)
       ? false
       : this.graph.addQuad(
           this.getSubjectNode(fieldTerm.id),
-          namedNode(`${NS_UI}minValue`),
+          UI.minValue,
           this.jsonLdtoRdf({ value: minValue })
         )
   }
@@ -175,7 +172,7 @@ export class ShexFormModel {
      */
     this.walkShape(start, rootFormTerm, this.localName(start.id))
     const writer = new Writer({
-      prefixes: { '': IRI_THIS, ui: NS_UI, dc: NS_DC },
+      prefixes: { '': IRI_THIS, ...UI.PREFIX_AND_NAMESPACE, ...DCTERMS.PREFIX_AND_NAMESPACE },
       lists: this.graph.extractLists({ remove: true })
     })
     writer.addQuads(this.graph.getQuads())
@@ -287,7 +284,7 @@ export class ShexFormModel {
       /**
        * insert one quad into n3 store
        */
-      graph.addQuad(formTerm, namedNode(`${NS_RDF}type`), namedNode(`${NS_UI}${type}`))
+      graph.addQuad(formTerm, RDF.type, UI.type)
 
       if (label) {
         /**
@@ -306,7 +303,7 @@ export class ShexFormModel {
       }
 
       // The UI vocabulary accepts only lists of atoms.
-      let parts = new ListObject(formTerm, namedNode(`${NS_UI}parts`), graph, this.termFactory)
+      let parts = new ListObject(formTerm, UI.parts, graph, this.termFactory)
 
       if (currentShape && currentShape.expression && currentShape.expression.expressions) {
         currentShape.expression.expressions.forEach((te: any, i: any) => {
@@ -329,7 +326,7 @@ export class ShexFormModel {
             fieldType = type
           }
 
-          let needFieldType = namedNode(NS_UI + fieldType)
+          let needFieldType = namedNode(`${UI.NAMESPACE}${fieldType}`)
 
           // copy annotations
           if ('annotations' in te) {
@@ -342,7 +339,7 @@ export class ShexFormModel {
                 needFieldType = null
               }
 
-              if (a.predicate === `${NS_UI}contents`) {
+              if (a.predicate === UI.contents.iriAsString) {
                 // ui:contents get their own item in the list
                 const commentTerm =
                   'id' in te
@@ -352,12 +349,8 @@ export class ShexFormModel {
                  * insert one quad into n3 store
                  */
 
-                graph.addQuad(commentTerm, namedNode(this.iriUitype), namedNode(`${NS_UI}Comment`))
-                graph.addQuad(
-                  commentTerm,
-                  namedNode(`${NS_UI}contents`),
-                  this.jsonLdtoRdf(a.object)
-                )
+                graph.addQuad(commentTerm, namedNode(this.iriUitype), UI.Comment)
+                graph.addQuad(commentTerm, UI.contents, this.jsonLdtoRdf(a.object))
                 // add the parts list entry for comment
                 parts.add(commentTerm, `${sanitizedPath}_parts_${i}_comment`)
               } else if (a && a.predicate && a.predicate.includes('label')) {
@@ -366,7 +359,7 @@ export class ShexFormModel {
                  */
                 graph.addQuad(
                   this.getSubjectNode(fieldTerm.id),
-                  namedNode(`${NS_UI}label`),
+                  UI.label,
                   this.jsonLdtoRdf(a.object)
                 )
               } else {
@@ -388,7 +381,7 @@ export class ShexFormModel {
           // add property arc
           graph.addQuad(
             this.getSubjectNode(fieldTerm.id),
-            namedNode(`${NS_UI}property`),
+            UI.property,
             this.jsonLdtoRdf(te.predicate)
           )
           let valueExpr =
@@ -400,18 +393,14 @@ export class ShexFormModel {
           if (valueExpr.type === 'Shape') {
             needFieldType = null
             let groupId = namedNode(`#${sanitizedPath}_parts_${i}_group`)
-            graph.addQuad(
-              this.getSubjectNode(fieldTerm.id),
-              this.iriRdftype,
-              namedNode(`${NS_UI}Multiple`)
-            )
+            graph.addQuad(this.getSubjectNode(fieldTerm.id), this.iriRdftype, UI.Multiple)
 
             /**
              * Adding a Single Part
              */
             graph.addQuad(
               `#${fieldTerm.id}`,
-              namedNode(`${NS_UI}part`),
+              UI.part,
               this.jsonLdtoRdf(`#${sanitizedPath}_parts_${i}_group`)
             )
 
@@ -421,7 +410,7 @@ export class ShexFormModel {
             if ('maxlength' in nc) {
               graph.addQuad(
                 this.getSubjectNode(fieldTerm.id),
-                namedNode(`${NS_UI}maxLength`),
+                UI.maxLength,
                 this.jsonLdtoRdf({ value: nc.maxlength })
               )
             }
@@ -429,7 +418,7 @@ export class ShexFormModel {
             if ('pattern' in nc) {
               graph.addQuad(
                 this.getSubjectNode(fieldTerm.id),
-                namedNode(`${NS_UI}pattern`),
+                UI.pattern,
                 this.jsonLdtoRdf({ value: nc.pattern })
               )
             }
@@ -454,14 +443,14 @@ export class ShexFormModel {
             if (optionsType.type === 'BooleanField') {
               graph.addQuad(
                 this.getSubjectNode(fieldTerm.id),
-                namedNode(`${NS_UI}default`),
+                UI.default,
                 this.jsonLdtoRdf({ value: '0' })
               )
             } else if (optionsType.type === 'Classifier') {
               if (optionsType.values) {
                 let classifierParts = new ListObject(
                   `#${fieldTerm.id}`,
-                  namedNode(`${NS_UI}values`),
+                  UI.values,
                   graph,
                   this.termFactory
                 )
@@ -489,7 +478,7 @@ export class ShexFormModel {
     } = this
     if (typeof ld === 'object' && 'value' in ld) {
       let dtOrLang =
-        ld.language || (ld.datatype && ld.datatype !== IRI_XsdString)
+        ld.language || (ld.datatype && ld.datatype !== XSD.string.iriAsString)
           ? ld.language
           : namedNode(ld.datatype)
 

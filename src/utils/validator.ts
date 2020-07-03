@@ -1,6 +1,5 @@
 import moment from 'moment'
-
-import { UI, NS } from '@constants'
+import { RDF, UI } from '@solid/lit-vocab-common'
 
 const actionMethod = (condition: boolean, message: string) => {
   return {
@@ -11,40 +10,40 @@ const actionMethod = (condition: boolean, message: string) => {
 
 export const validators = [
   {
-    name: UI.REQUIRED,
+    name: UI.required,
     action: (field: any) =>
-      actionMethod(!(field.value === '' || !field.value), field[UI.REQUIRED_ERROR])
+      actionMethod(!(field.value === '' || !field.value), field[UI.requiredError])
   },
   {
-    name: UI.PATTERN,
+    name: UI.pattern,
     action: (field: any) => {
-      const regex = new RegExp(field[UI.PATTERN])
-      return actionMethod(regex.test(field.value), field[UI.VALIDATION_ERROR])
+      const regex = new RegExp(field[UI.pattern])
+      return actionMethod(regex.test(field.value), field[UI.validationError])
     }
   },
   {
-    name: UI.MIN_LENGTH,
+    name: UI.minLength,
     action: (field: any) =>
-      actionMethod(field.value.length >= field[UI.MIN_LENGTH], field[UI.VALIDATION_ERROR])
+      actionMethod(field.value.length >= field[UI.minLength], field[UI.validationError])
   },
   {
-    name: UI.MAX_LENGTH,
+    name: UI.maxLength,
     action: (field: any) =>
-      actionMethod(field.value.length <= field[UI.MAX_LENGTH], field[UI.VALIDATION_ERROR])
+      actionMethod(field.value.length <= field[UI.maxLength], field[UI.validationError])
   },
   {
-    name: UI.MIN_VALUE,
+    name: UI.minValue,
     action: (field: any) => {
-      if (field['rdf:type'].includes('Date')) {
+      if (field[RDF.type].includes('Date')) {
         return actionMethod(
-          moment(field.value).isSameOrAfter(moment(field[UI.MIN_VALUE])),
-          field[UI.VALIDATION_ERROR]
+          moment(field.value).isSameOrAfter(moment(field[UI.minValue])),
+          field[UI.validationError]
         )
       }
 
-      if (field['rdf:type'] === NS.UI.TimeField) {
+      if (field[RDF.type] === UI.timeField.iriAsString) {
         const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
-        const [minHour, minMinute, minSecond] = field[UI.MIN_VALUE]
+        const [minHour, minMinute, minSecond] = field[UI.minValue]
           .split(':')
           .map((v: string) => Number(v))
 
@@ -56,27 +55,28 @@ export const validators = [
           second: minSecond
         })
 
-        return actionMethod(fieldTime.isSameOrAfter(maxTime), field[UI.VALIDATION_ERROR])
+        return actionMethod(fieldTime.isSameOrAfter(maxTime), field[UI.validationError])
       }
 
       return actionMethod(
-        Number(field.value) >= Number(field[UI.MIN_VALUE]),
-        field[UI.VALIDATION_ERROR]
+        Number(field.value) >= Number(field[UI.minValue]),
+        field[UI.validationError]
       )
     }
   },
   {
-    name: UI.MAX_VALUE,
+    name: UI.maxValue,
     action: (field: any) => {
-      if (field['rdf:type'].includes('Date')) {
+      if (field[RDF.type].includes('Date')) {
         return actionMethod(
-          moment(field.value).isSameOrBefore(moment(field[UI.MAX_VALUE])),
-          field[UI.VALIDATION_ERROR]
+          moment(field.value).isSameOrBefore(moment(field[UI.maxValue])),
+          field[UI.validationError]
         )
       }
-      if (field['rdf:type'] === NS.UI.TimeField) {
+
+      if (field[RDF.type] === UI.timeField.iriAsString) {
         const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
-        const [maxHour, maxMinute, maxSecond] = field[UI.MAX_VALUE]
+        const [maxHour, maxMinute, maxSecond] = field[UI.maxValue]
           .split(':')
           .map((v: string) => Number(v))
 
@@ -88,50 +88,50 @@ export const validators = [
           second: maxSecond
         })
 
-        return actionMethod(fieldTime.isSameOrBefore(maxTime), field[UI.VALIDATION_ERROR])
+        return actionMethod(fieldTime.isSameOrBefore(maxTime), field[UI.validationError])
       }
 
       return actionMethod(
-        Number(field.value) <= Number(field[UI.MAX_VALUE]),
-        field[UI.VALIDATION_ERROR]
+        Number(field.value) <= Number(field[UI.maxValue]),
+        field[UI.validationError]
       )
     }
   },
   {
-    name: UI.MIN_DATE_OFFSET,
+    name: UI.minDateOffset,
     action: (field: any) =>
       actionMethod(
-        moment(field.value).isAfter(moment().subtract(field[UI.MIN_DATE_OFFSET], 'd')),
-        field[UI.VALIDATION_ERROR]
+        moment(field.value).isAfter(moment().subtract(field[UI.minDateOffset], 'd')),
+        field[UI.validationError]
       )
   },
   {
-    name: UI.MAX_DATE_OFFSET,
+    name: UI.maxDateOffset,
     action: (field: any) =>
       actionMethod(
-        moment(field.value).isBefore(moment().add(field[UI.MAX_DATE_OFFSET], 'd')),
-        field[UI.VALIDATION_ERROR]
+        moment(field.value).isBefore(moment().add(field[UI.maxDateOffset], 'd')),
+        field[UI.validationError]
       )
   },
   {
-    name: UI.MIN_DATE_TIME_OFFSET,
+    name: UI.minDateTimeOffset,
     action: (field: any) => {
-      if (field[UI.MIN_VALUE]) return actionMethod(true, 'Skipped validation')
+      if (field[UI.minValue]) return actionMethod(true, 'Skipped validation')
 
       return actionMethod(
-        moment(field.value).isAfter(moment().subtract(field[UI.MIN_DATE_TIME_OFFSET], 'seconds')),
-        field[UI.VALIDATION_ERROR]
+        moment(field.value).isAfter(moment().subtract(field[UI.minDateTimeOffset], 'seconds')),
+        field[UI.validationError]
       )
     }
   },
   {
-    name: UI.MAX_DATE_TIME_OFFSET,
+    name: UI.maxDateTimeOffset,
     action: (field: any) => {
-      if (field[UI.MAX_VALUE]) return actionMethod(true, 'Skipped validation')
+      if (field[UI.maxValue]) return actionMethod(true, 'Skipped validation')
 
       return actionMethod(
-        moment(field.value).isBefore(moment().add(field[UI.MAX_DATE_TIME_OFFSET], 'seconds')),
-        field[UI.VALIDATION_ERROR]
+        moment(field.value).isBefore(moment().add(field[UI.maxDateTimeOffset], 'seconds')),
+        field[UI.validationError]
       )
     }
   }
