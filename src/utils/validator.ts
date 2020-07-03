@@ -73,6 +73,7 @@ export const validators = [
           field[UI.validationError]
         )
       }
+
       if (field[RDF.type] === UI.timeField.iriAsString) {
         const [hour, minute, second] = field.value.split(':').map((v: string) => Number(v))
         const [maxHour, maxMinute, maxSecond] = field[UI.maxValue]
