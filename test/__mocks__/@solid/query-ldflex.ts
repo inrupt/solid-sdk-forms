@@ -1,4 +1,5 @@
 const { context } = jest.requireActual('@solid/query-ldflex').default
+const { VCARD } = require('@solid/lit-vocab-common')
 
 const ldflex: any = {
   context,
@@ -9,7 +10,7 @@ const ldflex: any = {
   properties: [],
   subjects: []
 }
-ldflex['vcard:fn'] = ldflex
-ldflex['https://example.org/#me'] = ldflex['vcard:fn']
+ldflex[VCARD.fn] = ldflex
+ldflex['https://example.org/#me'] = ldflex[VCARD.fn]
 
 export default ldflex

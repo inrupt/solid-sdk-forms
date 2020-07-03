@@ -1,9 +1,9 @@
 import shexParser from '@shexjs/parser'
 import shexCore from '@shexjs/core'
+import { SHEX } from '@solid/lit-vocab-common'
 import * as N3 from 'n3'
 import { ShExRSchema } from '../schemas/shexRs'
 import { fetchSchema } from '../utils/solid-fetch'
-import { SHEX_SCHEMA } from '../constants/index'
 import { ShexFormModel } from './shex-form-model'
 
 export class FormModel {
@@ -58,7 +58,7 @@ export class FormModel {
       /**
        * Insert an array of quads
        */
-      const schemaRoot = graph.getQuads(null, shexCore.Util.RDF.type, SHEX_SCHEMA, '')[0].subject // !!check
+      const schemaRoot = graph.getQuads(null, shexCore.Util.RDF.type, SHEX.Schema, '')[0].subject // !!check
       const val = graphParser.validate(
         shexCore.Util.makeN3DB(graph),
         schemaRoot,
@@ -82,6 +82,14 @@ export class FormModel {
     try {
       // const schemaText = await solidFetch.fetchSchema(url)
       const schemaText = await fetchSchema(url)
+      return this.parseSchemaString(url, schemaText)
+    } catch (error) {
+      throw Error(error)
+    }
+  }
+
+  parseSchemaString = async (url: string, schemaText: string) => {
+    try {
       const format = this.schemaType(url)
       let schema
       switch (format.toLowerCase()) {
@@ -128,6 +136,20 @@ export class FormModel {
     }
     return object
   }
+
+  /**
+   * Parse schema to Form Model
+   */
+  parseShExString = async (schemaText: string): Promise<any> => {
+    try {
+      const schema = await this.parseSchemaString(this.url, schemaText)
+      const formModel = new ShexFormModel(schema, this.documentUri)
+      return formModel.convert()
+    } catch (error) {
+      throw Error(error)
+    }
+  }
+
   /**
    * Parse schema to Form Model
    */

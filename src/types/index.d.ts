@@ -18,4 +18,4 @@ declare module 'ldflex' {
   export default data
 }
 
-declare module '@inrupt/lit-generated-vocab-common'
+declare module '@solid/lit-vocab-common'

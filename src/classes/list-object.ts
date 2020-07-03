@@ -1,12 +1,9 @@
-import { NS_RDF } from '../constants/index'
+import { RDF } from '@solid/lit-vocab-common'
 
 export class ListObject {
-  NS_Rdf: string
-
   constructor(private s: string, private p: string, private graph: any, private termFactory: any) {
     this.graph = graph
     this.termFactory = termFactory
-    this.NS_Rdf = NS_RDF
   }
   /**
    * Add object into Quad using n3
@@ -17,13 +14,13 @@ export class ListObject {
   add(elt: any, label: string | undefined = undefined) {
     let partLi = this.termFactory.blankNode(label)
     this.graph.addQuad(this.s, this.p, partLi)
-    this.graph.addQuad(partLi, this.termFactory.namedNode(`${this.NS_Rdf}first`), elt)
+    this.graph.addQuad(partLi, RDF.first, elt)
     this.s = partLi
-    this.p = this.termFactory.namedNode(`${this.NS_Rdf}rest`)
+    this.p = RDF.rest
     return partLi
   }
 
   end() {
-    this.graph.addQuad(this.s, this.p, this.termFactory.namedNode(`${this.NS_Rdf}nil`))
+    this.graph.addQuad(this.s, this.p, RDF.nil)
   }
 }
