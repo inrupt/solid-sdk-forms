@@ -156,8 +156,7 @@
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.15.0",
     "tslint-config-standard": "^9.0.0",
-    "typedoc": "^0.15.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.9.6"
   },
   "dependencies": {
     "@solid/lit-vocab-common": "^0.4.8",
@@ -174,6 +173,7 @@
     "rollup-plugin-alias": "^2.0.0",
     "rollup-plugin-inject": "^3.0.1",
     "solid-auth-client": "^2.3.1",
+    "typedoc": "^0.17.8",
     "uuid": "^3.3.3"
   }
 }
