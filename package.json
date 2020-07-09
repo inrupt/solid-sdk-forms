@@ -116,7 +116,7 @@
     "@commitlint/config-conventional": "^9.0.1",
     "@shexjs/core": "^1.0.0-alpha.4",
     "@shexjs/parser": "^1.0.0-alpha.4",
-    "@types/jest": "^23.3.14",
+    "@types/jest": "^26.0.4",
     "@types/n3": "^1.1.0",
     "@types/node": "^10.14.15",
     "@types/solid-auth-client": "^2.3.0",
