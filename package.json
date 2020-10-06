@@ -161,7 +161,7 @@
   },
   "dependencies": {
     "@solid/query-ldflex": "^2.6.0",
-    "@types/lodash": "^4.14.149",
+    "@types/lodash": "^4.14.161",
     "bufferutil": "^4.0.1",
     "global": "^4.4.0",
     "jsonld-request": "^0.2.0",
