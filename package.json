@@ -174,6 +174,6 @@
     "rollup-plugin-alias": "^2.0.0",
     "rollup-plugin-inject": "^3.0.1",
     "solid-auth-client": "^2.3.1",
-    "uuid": "^3.3.3"
+    "uuid": "^8.3.2"
   }
 }
