@@ -1,3 +1,6 @@
+# DEPRECATED
+**Package no longer supported. Use at your own risk.**
+
 # Solid SDK Forms
 
 <img src="https://solid.inrupt.com/themes/custom/solid/logo.svg" width="150" height="150">
