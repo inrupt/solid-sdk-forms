@@ -160,7 +160,7 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "@solid/query-ldflex": "^2.6.0",
+    "@solid/query-ldflex": "^2.11.2",
     "@types/lodash": "^4.14.149",
     "bufferutil": "^4.0.1",
     "global": "^4.4.0",
